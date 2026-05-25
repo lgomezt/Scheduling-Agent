@@ -55,11 +55,7 @@ const isEditable = (_source: CalendarEvent["source"]) => true;
 
 const asDate = (d: Date | string): Date => (typeof d === "string" ? new Date(d) : d);
 
-const scrollToNineAm = (() => {
-  const d = new Date();
-  d.setHours(9, 0, 0, 0);
-  return d;
-})();
+const scrollToNineAm = new Date(2020, 0, 1, 9, 0, 0);
 
 const DEFAULT_TITLE = "New event";
 
@@ -67,9 +63,15 @@ type Props = {
   sessionId: string;
   weekStart: Date;
   onWeekChange: (next: Date) => void;
+  hideConnectButton?: boolean;
 };
 
-export const CalendarPane = ({ sessionId, weekStart, onWeekChange }: Props) => {
+export const CalendarPane = ({
+  sessionId,
+  weekStart,
+  onWeekChange,
+  hideConnectButton = false,
+}: Props) => {
   const qc = useQueryClient();
   const weekEnd = useMemo(() => addDays(weekStart, 7), [weekStart]);
   const { data: events = [] } = useQuery({
@@ -209,7 +211,7 @@ export const CalendarPane = ({ sessionId, weekStart, onWeekChange }: Props) => {
         <button onClick={() => onWeekChange(new Date())} className="btn-secondary">
           Today
         </button>
-        {calStatus ? (
+        {!hideConnectButton && calStatus ? (
           <button className="btn-secondary connect-cal" onClick={() => setShowConnect(true)}>
             {!calStatus.connected || !calStatus.syncEvents
               ? "Connect Google Calendar"
@@ -219,7 +221,7 @@ export const CalendarPane = ({ sessionId, weekStart, onWeekChange }: Props) => {
           </button>
         ) : null}
       </div>
-      {showConnect && calStatus ? (
+      {!hideConnectButton && showConnect && calStatus ? (
         <CalendarConnectModal status={calStatus} onClose={() => setShowConnect(false)} />
       ) : null}
       <div className="calendar-host">

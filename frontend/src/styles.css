@@ -335,6 +335,7 @@ a.btn-primary { display: inline-block; text-decoration: none; background: var(--
   font-size: 0.9rem;
   color: var(--muted);
 }
+.calendar-pref-block { margin-bottom: 1rem; }
 .pref-radio {
   display: flex;
   gap: 0.55rem;
@@ -344,6 +345,102 @@ a.btn-primary { display: inline-block; text-decoration: none; background: var(--
   line-height: 1.4;
 }
 .pref-radio input { margin-top: 0.2rem; }
+
+.step-shell {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 1.5rem 1.75rem 2.5rem;
+}
+.step-breadcrumb {
+  list-style: none;
+  display: flex;
+  gap: 0.5rem;
+  padding: 0;
+  margin: 0 0 1.5rem;
+}
+.step-breadcrumb li { flex: 1; }
+.step-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.step-pill .step-num {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.step-pill.current {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: white;
+}
+.step-pill.current .step-num { background: white; color: var(--ink); }
+.step-pill.done { border-color: var(--accent); background: #f1f8f5; }
+.step-pill.done .step-num { background: var(--accent); color: white; }
+.step-pill.upcoming { color: var(--muted); }
+.step-check { color: var(--accent); font-weight: 700; }
+
+.step-header { margin-bottom: 1.25rem; }
+.step-header h2 { margin: 0 0 0.25rem; }
+.step-header p { margin: 0; }
+
+.step-body { display: flex; flex-direction: column; gap: 1.25rem; }
+.step-footer { margin-top: 1.5rem; }
+.step-footer-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.onboarding-calendar-hint { margin: 0; font-size: 0.9rem; }
+.onboarding-calendar-host {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.75rem;
+  height: 540px;
+  display: flex;
+}
+.onboarding-calendar-host .calendar-pane { width: 100%; }
+
+.upload-slot-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+}
+
+.scenario-summary-list {
+  list-style: decimal inside;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.scenario-summary-list li {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+}
+.scenario-summary-title { font-weight: 600; display: inline; }
+.scenario-summary-prompt { font-size: 0.9rem; margin-top: 0.2rem; }
+.scenario-summary-meta { font-size: 0.8rem; margin-top: 0.2rem; }
 
 .modal-backdrop {
   position: fixed; inset: 0;

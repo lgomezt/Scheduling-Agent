@@ -1,9 +1,9 @@
 import { Link, Navigate, Route, Routes } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "./auth/AuthContext";
-import { getCurrentSession } from "./api/sessions";
 import { Login } from "./pages/Login";
-import { Upload } from "./pages/Upload";
+import { CalendarStep } from "./pages/onboarding/CalendarStep";
+import { ProfileStep } from "./pages/onboarding/ProfileStep";
+import { ScenariosStep } from "./pages/onboarding/ScenariosStep";
 import { Workspace } from "./pages/Workspace";
 import { Done } from "./pages/Done";
 
@@ -20,8 +20,8 @@ export const App = () => {
           Scheduling Agent
         </Link>
         <div className="user">
-          <Link to="/upload" className="navbtn">
-            Upload material
+          <Link to="/onboarding/calendar" className="navbtn">
+            Setup
           </Link>
           <span className="muted">{user.email}</span>
           <button onClick={() => logout()}>Sign out</button>
@@ -29,8 +29,11 @@ export const App = () => {
       </header>
       <main className="app-main">
         <Routes>
-          <Route path="/" element={<RouteGate />} />
-          <Route path="/upload" element={<Upload />} />
+          <Route path="/" element={<Navigate to="/onboarding/calendar" replace />} />
+          <Route path="/onboarding/calendar" element={<CalendarStep />} />
+          <Route path="/onboarding/profile" element={<ProfileStep />} />
+          <Route path="/onboarding/scenarios" element={<ScenariosStep />} />
+          <Route path="/upload" element={<Navigate to="/onboarding/calendar" replace />} />
           <Route path="/workspace" element={<Workspace />} />
           <Route path="/done" element={<Done />} />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -38,15 +41,4 @@ export const App = () => {
       </main>
     </div>
   );
-};
-
-const RouteGate = () => {
-  const { data, isLoading } = useQuery({
-    queryKey: ["session", "current"],
-    queryFn: getCurrentSession,
-  });
-  if (isLoading) return <div className="screen-center">Loading session…</div>;
-  if (!data) return <Navigate to="/upload" replace />;
-  if (data.status === "completed") return <Navigate to="/done" replace />;
-  return <Navigate to="/workspace" replace />;
 };

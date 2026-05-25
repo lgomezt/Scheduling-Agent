@@ -35,9 +35,8 @@ export const Workspace = () => {
 
   const activate = useMutation({
     mutationFn: activateScenario,
-    onSuccess: (result) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["events", sessionId] });
-      if (result.anchorIso) setWeekAnchor(new Date(result.anchorIso));
     },
   });
 
@@ -136,6 +135,7 @@ export const Workspace = () => {
           sessionId={session.id}
           weekStart={start}
           onWeekChange={setWeekAnchor}
+          hideConnectButton
         />
       </div>
       <aside className="workspace-side">
