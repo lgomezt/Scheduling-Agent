@@ -3,7 +3,7 @@ services:
     build: .
     image: scheduling-agent:latest
     ports:
-      - "3001:3001"
+      - "3002:3001"
     volumes:
       - scheduling-agent-data:/data
     environment:
