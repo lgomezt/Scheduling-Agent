@@ -1,0 +1,27 @@
+services:
+  app:
+    build: .
+    image: scheduling-agent:latest
+    ports:
+      - "3001:3001"
+    volumes:
+      - scheduling-agent-data:/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATA_DIR=/data
+      - PUBLIC_URL=${PUBLIC_URL:-http://localhost:3001}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.0-flash-exp}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-http://localhost:3001/api/auth/google/callback}
+      - MICROSOFT_CLIENT_ID=${MICROSOFT_CLIENT_ID:-}
+      - MICROSOFT_CLIENT_SECRET=${MICROSOFT_CLIENT_SECRET:-}
+      - MICROSOFT_REDIRECT_URI=${MICROSOFT_REDIRECT_URI:-http://localhost:3001/api/auth/microsoft/callback}
+      - MICROSOFT_TENANT=${MICROSOFT_TENANT:-common}
+    restart: unless-stopped
+
+volumes:
+  scheduling-agent-data:
