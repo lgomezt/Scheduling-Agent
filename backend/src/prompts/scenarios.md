@@ -2,6 +2,14 @@
 
 You will receive a PDF containing a set of scheduling scenarios for a research study, plus the participant's **current weekly calendar** (events that already exist for the current week). Extract every distinct scenario and return a JSON array.
 
+## Read the PDF carefully
+
+- Read the entire document end-to-end before emitting anything. Do not stop early.
+- Identify scenarios by structure: numbered headings, bullets, "Scenario X:" markers, or clear paragraph breaks describing a new situation.
+- If the PDF lists 7 scenarios, you must return 7. Do not skip, merge, or paraphrase multiple scenarios into one.
+- If a scenario is split across pages, stitch it. If two paragraphs describe the *same* situation, treat them as one scenario.
+- Preserve concrete details: names, durations, deadlines, options, dates if mentioned. They become the context events.
+
 For each scenario, produce:
 
 1. `title` — short 3-8 word label.

@@ -53,6 +53,15 @@ type AnswerRow = {
   created_at: string;
 };
 
+const exportEvent = (row: EventRow) => ({
+  id: row.id,
+  source: row.source,
+  title: row.title,
+  start: row.start_iso,
+  end: row.end_iso,
+  metadata: row.metadata_json ? JSON.parse(row.metadata_json) : null,
+});
+
 exportRouter.get("/:sessionId", requireAuth, (req, res) => {
   const sessionId = String(req.params.sessionId);
   const session = db
@@ -85,30 +94,58 @@ exportRouter.get("/:sessionId", requireAuth, (req, res) => {
     .all(sessionId) as EventRow[];
 
   const answers = db
-    .prepare("SELECT * FROM scenario_answers WHERE session_id = ? ORDER BY created_at")
+    .prepare("SELECT * FROM scenario_answers WHERE session_id = ?")
     .all(sessionId) as AnswerRow[];
+  const answerByScenario = new Map<number, AnswerRow>(answers.map((a) => [a.scenario_id, a]));
 
-  const eventById = new Map<number, EventRow>(events.map((e) => [e.id, e]));
-
-  const exportEvent = (row: EventRow | undefined) =>
-    row
-      ? {
-          id: row.id,
-          source: row.source,
-          title: row.title,
-          start: row.start_iso,
-          end: row.end_iso,
-          metadata: row.metadata_json ? JSON.parse(row.metadata_json) : null,
-        }
-      : null;
+  const eventsByScenario = new Map<number, EventRow[]>();
+  for (const e of events) {
+    if (e.scenario_id == null) continue;
+    const arr = eventsByScenario.get(e.scenario_id) ?? [];
+    arr.push(e);
+    eventsByScenario.set(e.scenario_id, arr);
+  }
 
   const eventsBySource: Record<string, ReturnType<typeof exportEvent>[]> = {};
   for (const e of events) {
     (eventsBySource[e.source] ??= []).push(exportEvent(e));
   }
 
+  const scenarioPayload = scenarios.map((s) => {
+    const answer = answerByScenario.get(s.id);
+    const ownedEvents = eventsByScenario.get(s.id) ?? [];
+
+    const response = answer
+      ? {
+          answeredAt: answer.created_at,
+          userReason: answer.user_reason,
+          userActions: answer.user_actions_json ? JSON.parse(answer.user_actions_json) : [],
+          agentSummary: answer.agent_reason,
+          agentOperations: answer.agent_actions_json ? JSON.parse(answer.agent_actions_json) : [],
+          decision: answer.user_decision,
+          feedback: answer.user_feedback,
+          calendarSnapshot: {
+            contextEvents: ownedEvents.filter((e) => e.source === "scenario_context").map(exportEvent),
+            userEvents: ownedEvents.filter((e) => e.source === "scenario_user").map(exportEvent),
+            agentEvents: ownedEvents.filter((e) => e.source === "scenario_agent").map(exportEvent),
+          },
+        }
+      : null;
+
+    return {
+      id: s.id,
+      orderIndex: s.order_index,
+      title: s.title,
+      description: s.description,
+      promptSummary: s.prompt_summary,
+      contextEvents: s.context_events_json ? JSON.parse(s.context_events_json) : [],
+      options: s.options_json ? JSON.parse(s.options_json) : null,
+      response,
+    };
+  });
+
   const payload = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     exportedAt: new Date().toISOString(),
     session: {
       id: session.id,
@@ -117,28 +154,12 @@ exportRouter.get("/:sessionId", requireAuth, (req, res) => {
       completedAt: session.completed_at,
     },
     user,
-    profileMarkdownInitial: profileInitial,
-    profileMarkdownCurrent: profileCurrent,
-    profileEdited: !!profileInitial && !!profileCurrent && profileInitial !== profileCurrent,
-    scenarios: scenarios.map((s) => ({
-      id: s.id,
-      orderIndex: s.order_index,
-      title: s.title,
-      description: s.description,
-      promptSummary: s.prompt_summary,
-      contextEvents: s.context_events_json ? JSON.parse(s.context_events_json) : [],
-      options: s.options_json ? JSON.parse(s.options_json) : null,
-    })),
-    answers: answers.map((a) => ({
-      scenarioId: a.scenario_id,
-      userReason: a.user_reason,
-      userActions: a.user_actions_json ? JSON.parse(a.user_actions_json) : [],
-      agentSummary: a.agent_reason,
-      agentActions: a.agent_actions_json ? JSON.parse(a.agent_actions_json) : [],
-      userDecision: a.user_decision,
-      userFeedback: a.user_feedback,
-      answeredAt: a.created_at,
-    })),
+    profile: {
+      initial: profileInitial,
+      current: profileCurrent,
+      edited: !!profileInitial && !!profileCurrent && profileInitial !== profileCurrent,
+    },
+    scenarios: scenarioPayload,
     calendarEvents: eventsBySource,
   };
 

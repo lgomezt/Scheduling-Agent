@@ -13,6 +13,7 @@ import {
   updateEventTime,
   updateEventTitle,
   type CalendarEvent,
+  type EventSource,
 } from "../../api/calendar";
 import { getCalendarStatus } from "../../api/google";
 import { CalendarConnectModal } from "./CalendarConnectModal";
@@ -64,6 +65,12 @@ type Props = {
   weekStart: Date;
   onWeekChange: (next: Date) => void;
   hideConnectButton?: boolean;
+  /** If set, only render events whose source is in this list. */
+  allowedSources?: EventSource[];
+  /** If set, fetch events across this wider range instead of the visible week.
+   * Lets sibling weeks load instantly when navigating, and gives the agent's
+   * later sync calls a populated cache. */
+  prefetchRange?: { start: Date; end: Date };
 };
 
 export const CalendarPane = ({
@@ -71,13 +78,24 @@ export const CalendarPane = ({
   weekStart,
   onWeekChange,
   hideConnectButton = false,
+  allowedSources,
+  prefetchRange,
 }: Props) => {
   const qc = useQueryClient();
   const weekEnd = useMemo(() => addDays(weekStart, 7), [weekStart]);
-  const { data: events = [] } = useQuery({
-    queryKey: ["events", sessionId, weekStart.toISOString()],
-    queryFn: () => getEvents(sessionId, weekStart, weekEnd),
+  const queryStart = prefetchRange?.start ?? weekStart;
+  const queryEnd = prefetchRange?.end ?? weekEnd;
+  const { data: rawEvents = [] } = useQuery({
+    queryKey: ["events", sessionId, queryStart.toISOString(), queryEnd.toISOString()],
+    queryFn: () => getEvents(sessionId, queryStart, queryEnd),
   });
+  const events = useMemo(
+    () =>
+      allowedSources
+        ? rawEvents.filter((e) => allowedSources.includes(e.source))
+        : rawEvents,
+    [rawEvents, allowedSources],
+  );
 
   const { data: calStatus } = useQuery({
     queryKey: ["google", "calendar-status"],
@@ -191,6 +209,12 @@ export const CalendarPane = ({
           onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
+            if (event.source === "scenario_context") {
+              const ok = window.confirm(
+                `Delete "${event.title}"? This event was extracted from the scenario PDF and can't be auto-recreated.`,
+              );
+              if (!ok) return;
+            }
             remove.mutate(event.id);
           }}
         >
@@ -203,11 +227,11 @@ export const CalendarPane = ({
   return (
     <div className="calendar-pane">
       <div className="calendar-toolbar">
-        <button onClick={() => onWeekChange(addWeeks(weekStart, -1))}>← Prev</button>
+        <button className="btn-secondary" onClick={() => onWeekChange(addWeeks(weekStart, -1))}>← Prev</button>
         <div className="week-label">
           {format(weekStart, "MMM d")} – {format(addDays(weekStart, 6), "MMM d, yyyy")}
         </div>
-        <button onClick={() => onWeekChange(addWeeks(weekStart, 1))}>Next →</button>
+        <button className="btn-secondary" onClick={() => onWeekChange(addWeeks(weekStart, 1))}>Next →</button>
         <button onClick={() => onWeekChange(new Date())} className="btn-secondary">
           Today
         </button>

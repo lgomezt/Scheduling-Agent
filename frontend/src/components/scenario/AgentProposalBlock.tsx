@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { AgentOp, AgentProposal } from "../../api/agent";
 
 type Props = {
@@ -90,13 +91,25 @@ export const AgentProposalBlock = ({
   onEditAnswer,
   onTryAgain,
 }: Props) => {
+  const blockRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (proposal && blockRef.current) {
+      blockRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [proposal]);
+
   if (loading) {
-    return <div className="agent-block loading">Gemini is reading your profile…</div>;
+    return (
+      <div ref={blockRef} className="agent-block loading">
+        Scheduling Agent is thinking about what you would have done, based on your profile and previous
+        scenarios…
+      </div>
+    );
   }
   if (!proposal) return null;
 
   return (
-    <div className="agent-block">
+    <div ref={blockRef} className="agent-block">
       <div className="agent-block-header">Agent proposal</div>
       <p className="agent-block-reason">{proposal.summary}</p>
 
@@ -111,23 +124,26 @@ export const AgentProposalBlock = ({
           ← Edit my answer
         </button>
         <button className="btn-secondary" onClick={onTryAgain}>
-          ↻ Try Gemini again
+          ↻ Ask the agent again
         </button>
       </div>
 
-      <div className="agent-decision-row">
-        <button
-          className={decision === "accept" ? "btn-accept active" : "btn-accept"}
-          onClick={() => onDecision("accept")}
-        >
-          Accept
-        </button>
-        <button
-          className={decision === "critique" ? "btn-critique active" : "btn-critique"}
-          onClick={() => onDecision("critique")}
-        >
-          Critique
-        </button>
+      <div className="agent-decision-block">
+        <div className="agent-decision-header">How does this compare to your answer?</div>
+        <div className="agent-decision-row">
+          <button
+            className={decision === "accept" ? "btn-accept active" : "btn-accept"}
+            onClick={() => onDecision("accept")}
+          >
+            Agree
+          </button>
+          <button
+            className={decision === "critique" ? "btn-critique active" : "btn-critique"}
+            onClick={() => onDecision("critique")}
+          >
+            Disagree
+          </button>
+        </div>
       </div>
 
       <label className="agent-feedback">

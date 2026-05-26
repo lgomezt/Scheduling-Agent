@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCurrentSession, completeSession } from "../api/sessions";
 import { CalendarPane } from "../components/calendar/CalendarPane";
@@ -13,6 +13,7 @@ type Phase = "placing" | "proposing" | "deciding";
 
 export const Workspace = () => {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const { data: session, isLoading } = useQuery({
     queryKey: ["session", "current"],
     queryFn: getCurrentSession,
@@ -56,6 +57,15 @@ export const Workspace = () => {
       setProposal(p);
       setPhase("deciding");
       qc.invalidateQueries({ queryKey: ["events", sessionId] });
+      // Jump the calendar to the week of the agent's first proposed event so
+      // the user actually sees what was just placed.
+      const firstAgentTime =
+        p.operations.find((o) => o.op === "create")?.start ??
+        p.operations.find((o) => o.op === "move")?.new_start;
+      if (firstAgentTime) {
+        const d = new Date(firstAgentTime);
+        if (!Number.isNaN(d.getTime())) setWeekAnchor(d);
+      }
     },
     onError: () => setPhase("placing"),
   });
@@ -63,12 +73,14 @@ export const Workspace = () => {
   const answer = useMutation({
     mutationFn: (vars: Parameters<typeof submitAnswer>) => submitAnswer(...vars),
     onSuccess: async () => {
-      qc.invalidateQueries({ queryKey: ["session", "current"] });
       const nextIndex = currentIndex + 1;
       if (nextIndex >= scenarios.length) {
         await completeSession(sessionId);
         qc.invalidateQueries({ queryKey: ["session", "current"] });
+        navigate("/done");
+        return;
       }
+      qc.invalidateQueries({ queryKey: ["session", "current"] });
       setCurrentIndex(nextIndex);
       setUserReason("");
       setProposal(null);
@@ -78,7 +90,16 @@ export const Workspace = () => {
     },
   });
 
-  if (isLoading) return <div className="screen-center">Loading workspace…</div>;
+  if (isLoading)
+    return (
+      <div className="screen-center">
+        <div className="skeleton-stack" aria-label="Loading workspace">
+          <div className="skeleton-line w-220" />
+          <div className="skeleton-line w-360" />
+          <div className="skeleton-line w-180" />
+        </div>
+      </div>
+    );
   if (!session) return <Navigate to="/upload" replace />;
   if (session.status === "completed") return <Navigate to="/done" replace />;
 
@@ -130,14 +151,6 @@ export const Workspace = () => {
 
   return (
     <div className="workspace">
-      <div className="workspace-calendar">
-        <CalendarPane
-          sessionId={session.id}
-          weekStart={start}
-          onWeekChange={setWeekAnchor}
-          hideConnectButton
-        />
-      </div>
       <aside className="workspace-side">
         <ScenarioPane
           sessionId={session.id}
@@ -163,6 +176,14 @@ export const Workspace = () => {
           }
         />
       </aside>
+      <div className="workspace-calendar">
+        <CalendarPane
+          sessionId={session.id}
+          weekStart={start}
+          onWeekChange={setWeekAnchor}
+          hideConnectButton
+        />
+      </div>
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { getScenarios, type Scenario, type ScenarioOption, type ContextEvent } from "../../api/scenarios";
 
 type Props = {
@@ -52,6 +53,9 @@ export const ScenarioPane = ({
       <div className="scenario-pane empty">
         <h3>All scenarios complete</h3>
         <p className="muted">Head to the Done page to download your log.</p>
+        <Link to="/done" className="btn-primary">
+          Go to results →
+        </Link>
       </div>
     );
   }
@@ -60,8 +64,16 @@ export const ScenarioPane = ({
 
   return (
     <div className="scenario-pane">
-      <div className="scenario-progress muted">
-        Scenario {currentIndex + 1} of {scenarios.length}
+      <div className="scenario-progress">
+        <div className="progress-dots" aria-hidden="true">
+          {scenarios.map((_, i) => {
+            const state = i < currentIndex ? "past" : i === currentIndex ? "current" : "upcoming";
+            return <span key={i} className={`progress-dot ${state}`} />;
+          })}
+        </div>
+        <span className="progress-label muted">
+          Scenario {currentIndex + 1} / {scenarios.length}
+        </span>
       </div>
       <h3>{scenario.title}</h3>
       <p className="scenario-description">{scenario.description}</p>
@@ -97,7 +109,7 @@ export const ScenarioPane = ({
           value={userReason}
           onChange={(e) => onReasonChange(e.target.value)}
           placeholder="Briefly explain the choices you made."
-          rows={4}
+          rows={8}
         />
       </label>
 

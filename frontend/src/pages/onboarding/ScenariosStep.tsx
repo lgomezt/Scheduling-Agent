@@ -32,7 +32,7 @@ export const ScenariosStep = () => {
   const upload = async () => {
     if (!sessionId || !file) return;
     setStatus("uploading");
-    setMessage("Gemini is reading your calendar and the scenarios PDF…");
+    setMessage("Scheduling Agent is reading your calendar and the scenarios PDF…");
     try {
       const r = await uploadPdf(sessionId, "scenarios", file);
       setStatus("done");
@@ -51,7 +51,7 @@ export const ScenariosStep = () => {
     <StepShell
       step="scenarios"
       title="Add the scenarios"
-      subtitle="Upload the scenarios PDF. Gemini sees the calendar you just set up so it can place each scenario's context events realistically."
+      subtitle="Upload the scenarios PDF. The agent uses the calendar you just set up to place each scenario's context events realistically."
       done={{
         calendar: !!onboarding?.calendarReady,
         profile: !!onboarding?.profileReady,
@@ -105,9 +105,24 @@ export const ScenariosStep = () => {
                 <div className="scenario-summary-prompt muted">{s.promptSummary}</div>
               ) : null}
               {s.contextEvents && s.contextEvents.length > 0 ? (
-                <div className="muted scenario-summary-meta">
-                  {s.contextEvents.length} context event{s.contextEvents.length === 1 ? "" : "s"}
-                </div>
+                <ul className="scenario-summary-events muted">
+                  {s.contextEvents.map((c, i) => (
+                    <li key={i}>
+                      <strong>{c.title}</strong>
+                      {" — "}
+                      {new Date(c.start).toLocaleString(undefined, {
+                        weekday: "short",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                      {" → "}
+                      {new Date(c.end).toLocaleString(undefined, {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </li>
+                  ))}
+                </ul>
               ) : null}
             </li>
           ))}

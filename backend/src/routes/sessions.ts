@@ -49,6 +49,21 @@ sessionsRouter.get("/current", requireAuth, (req, res) => {
   res.json(toApi(row));
 });
 
+sessionsRouter.get("/latest", requireAuth, (req, res) => {
+  const row = db
+    .prepare(
+      `SELECT * FROM sessions
+       WHERE user_id = ?
+       ORDER BY created_at DESC LIMIT 1`,
+    )
+    .get(req.userId) as SessionRow | undefined;
+  if (!row) {
+    res.json(null);
+    return;
+  }
+  res.json(toApi(row));
+});
+
 sessionsRouter.get("/:id", requireAuth, (req, res) => {
   const row = db
     .prepare("SELECT * FROM sessions WHERE id = ? AND user_id = ?")
@@ -122,6 +137,30 @@ sessionsRouter.get("/:id/onboarding", requireAuth, (req, res) => {
     scenarioCount,
     nextStep,
   });
+});
+
+sessionsRouter.delete("/:id", requireAuth, (req, res) => {
+  const id = String(req.params.id);
+  const row = db
+    .prepare("SELECT id FROM sessions WHERE id = ? AND user_id = ?")
+    .get(id, req.userId) as { id: string } | undefined;
+  if (!row) {
+    res.status(404).json({ error: "Session not found" });
+    return;
+  }
+  const profileDir = path.join(config.dataDir, "profiles");
+  for (const suffix of [".initial.md", ".current.md", ".md"]) {
+    const p = path.join(profileDir, `${id}${suffix}`);
+    if (fs.existsSync(p)) fs.unlinkSync(p);
+  }
+  const uploadDir = path.join(config.dataDir, "uploads", id);
+  if (fs.existsSync(uploadDir)) {
+    fs.rmSync(uploadDir, { recursive: true, force: true });
+  }
+  // CASCADE on sessions clears scenarios, calendar_events, scenario_answers,
+  // uploads rows, and sync_tombstones automatically.
+  db.prepare("DELETE FROM sessions WHERE id = ?").run(id);
+  res.json({ ok: true });
 });
 
 sessionsRouter.post("/:id/advance", requireAuth, (req, res) => {

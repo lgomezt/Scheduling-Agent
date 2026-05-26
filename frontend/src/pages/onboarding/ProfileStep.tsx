@@ -32,7 +32,7 @@ export const ProfileStep = () => {
   const upload = async () => {
     if (!sessionId || !file) return;
     setStatus("uploading");
-    setMessage("Sending to Gemini…");
+    setMessage("Scheduling Agent is reading your survey…");
     try {
       const r = await uploadPdf(sessionId, "survey", file);
       setStatus("done");
@@ -51,7 +51,7 @@ export const ProfileStep = () => {
     <StepShell
       step="profile"
       title="Tell us about you"
-      subtitle="Upload your survey PDF. Gemini turns it into a markdown profile the agent reads."
+      subtitle="Upload your survey PDF. The agent turns it into a markdown profile it will use to act on your behalf."
       done={{
         calendar: !!onboarding?.calendarReady,
         profile: !!onboarding?.profileReady,

@@ -10,7 +10,16 @@ import { Done } from "./pages/Done";
 export const App = () => {
   const { user, loading, logout } = useAuth();
 
-  if (loading) return <div className="screen-center">Loading…</div>;
+  if (loading)
+    return (
+      <div className="screen-center">
+        <div className="skeleton-stack" aria-label="Loading">
+          <div className="skeleton-line w-220" />
+          <div className="skeleton-line w-360" />
+          <div className="skeleton-line w-180" />
+        </div>
+      </div>
+    );
   if (!user) return <Login />;
 
   return (

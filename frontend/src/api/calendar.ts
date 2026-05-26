@@ -46,3 +46,8 @@ export const updateEventTitle = (sessionId: string, eventId: number, title: stri
     method: "PATCH",
     body: JSON.stringify({ title }),
   });
+
+export const purgeGoogleEvents = (sessionId: string) =>
+  api<{ ok: true; deleted: number }>(`/api/events/${sessionId}/source/google`, {
+    method: "DELETE",
+  });

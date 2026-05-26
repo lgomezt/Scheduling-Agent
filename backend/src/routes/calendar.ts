@@ -70,17 +70,25 @@ calendarRouter.get("/:sessionId", requireAuth, async (req, res) => {
       const tombstones = db
         .prepare("SELECT external_id FROM sync_tombstones WHERE session_id = ?")
         .all(sessionId) as { external_id: string }[];
-      const skip = new Set([
-        ...existing.map((r) => r.external_id),
-        ...tombstones.map((r) => r.external_id),
-      ]);
+      const existingExt = new Set(existing.map((r) => r.external_id));
+      const tombstoned = new Set(tombstones.map((r) => r.external_id));
       const insert = db.prepare(
         `INSERT INTO calendar_events (session_id, source, external_id, title, start_iso, end_iso)
          VALUES (?, 'google', ?, ?, ?, ?)`,
       );
+      // Title (not times) re-syncs on every fetch so the anonymize / real-title
+      // preference toggle is reflected on already-cached events. Times stay
+      // local so user drag-drops aren't undone.
+      const updateTitle = db.prepare(
+        `UPDATE calendar_events SET title = ?
+         WHERE session_id = ? AND external_id = ? AND source = 'google'`,
+      );
       const tx = db.transaction(() => {
         for (const s of synced) {
-          if (s.externalId && !skip.has(s.externalId)) {
+          if (!s.externalId || tombstoned.has(s.externalId)) continue;
+          if (existingExt.has(s.externalId)) {
+            updateTitle.run(s.title, sessionId, s.externalId);
+          } else {
             insert.run(sessionId, s.externalId, s.title, s.startIso, s.endIso);
           }
         }
@@ -136,6 +144,28 @@ calendarRouter.post("/:sessionId", requireAuth, (req, res) => {
     .prepare("SELECT * FROM calendar_events WHERE id = ?")
     .get(result.lastInsertRowid) as EventRow;
   res.json(toApi(row));
+});
+
+calendarRouter.delete("/:sessionId/source/google", requireAuth, (req, res) => {
+  const sessionId = String(req.params.sessionId);
+  if (!sessionForUser(sessionId, req.userId!)) {
+    res.status(404).json({ error: "Session not found" });
+    return;
+  }
+  const rows = db
+    .prepare(
+      "SELECT external_id FROM calendar_events WHERE session_id = ? AND source = 'google' AND external_id IS NOT NULL",
+    )
+    .all(sessionId) as { external_id: string }[];
+  const tombstone = db.prepare(
+    "INSERT OR IGNORE INTO sync_tombstones (session_id, external_id) VALUES (?, ?)",
+  );
+  const tx = db.transaction(() => {
+    for (const r of rows) tombstone.run(sessionId, r.external_id);
+    db.prepare("DELETE FROM calendar_events WHERE session_id = ? AND source = 'google'").run(sessionId);
+  });
+  tx();
+  res.json({ ok: true, deleted: rows.length });
 });
 
 calendarRouter.delete("/:sessionId/:eventId", requireAuth, (req, res) => {

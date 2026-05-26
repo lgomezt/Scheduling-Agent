@@ -9,6 +9,7 @@ import {
   proposeChoice,
   type CalendarEventLite,
   type ScenarioContextLite,
+  type PriorResponseLite,
   type AgentOp,
 } from "../services/gemini.js";
 import { listGoogleEvents } from "../services/google-calendar.js";
@@ -19,11 +20,23 @@ export const agentRouter = Router();
 type ScenarioRow = {
   id: number;
   session_id: string;
+  order_index: number;
   title: string;
   description: string;
   options_json: string | null;
   prompt_summary: string | null;
   context_events_json: string | null;
+};
+
+type PriorAnswerRow = {
+  scenario_title: string;
+  scenario_description: string;
+  user_reason: string;
+  user_decision: "accept" | "critique";
+  user_feedback: string | null;
+  agent_reason: string;
+  agent_actions_json: string | null;
+  user_actions_json: string | null;
 };
 
 type EventRow = {
@@ -108,6 +121,8 @@ agentRouter.post("/propose/:scenarioId", requireAuth, async (req, res) => {
 
   const { start: weekStart, end: weekEnd } = weekBoundsAround(anchorIsoFromContext(contextEvents));
 
+  // Isolation: exclude the CURRENT scenario's context/user/agent events so Gemini
+  // can't see the user's in-progress reasoning before forming its own decision.
   const localEvents = db
     .prepare(
       `SELECT * FROM calendar_events
@@ -116,6 +131,38 @@ agentRouter.post("/propose/:scenarioId", requireAuth, async (req, res) => {
        ORDER BY start_iso`,
     )
     .all(scenario.session_id, weekEnd, weekStart, scenarioId) as EventRow[];
+
+  // Prior responses: scenarios that come strictly before this one (by order_index).
+  // Gemini uses them to stay consistent with past decisions. Current scenario is
+  // never included regardless of save state.
+  const priorAnswerRows = db
+    .prepare(
+      `SELECT s.title AS scenario_title,
+              s.description AS scenario_description,
+              sa.user_reason,
+              sa.user_decision,
+              sa.user_feedback,
+              sa.agent_reason,
+              sa.agent_actions_json,
+              sa.user_actions_json
+       FROM scenario_answers sa
+       JOIN scenarios s ON s.id = sa.scenario_id
+       WHERE sa.session_id = ?
+         AND s.order_index < ?
+       ORDER BY s.order_index`,
+    )
+    .all(scenario.session_id, scenario.order_index) as PriorAnswerRow[];
+
+  const priorResponses: PriorResponseLite[] = priorAnswerRows.map((r) => ({
+    scenario_title: r.scenario_title,
+    scenario_description: r.scenario_description,
+    user_reason: r.user_reason,
+    user_decision: r.user_decision,
+    user_feedback: r.user_feedback,
+    agent_summary: r.agent_reason,
+    agent_actions: r.agent_actions_json ? JSON.parse(r.agent_actions_json) : [],
+    user_actions: r.user_actions_json ? JSON.parse(r.user_actions_json) : [],
+  }));
 
   let googleEvents: CalendarEventLite[] = [];
   try {
@@ -152,6 +199,7 @@ agentRouter.post("/propose/:scenarioId", requireAuth, async (req, res) => {
       profileMarkdown: profileMarkdown(scenario.session_id),
       calendarEvents: otherCalendarEvents,
       scenarioContext: scenarioContextLite,
+      priorResponses,
       scenario: {
         title: scenario.title,
         description: scenario.description,

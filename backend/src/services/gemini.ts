@@ -69,7 +69,14 @@ export const pdfToScenarios = async (
   pdfPath: string,
   context: ScenarioGenContext,
 ): Promise<ParsedScenario[]> => {
-  const model = textModel(loadPrompt("scenarios"), true);
+  const model = getClient().getGenerativeModel({
+    model: config.gemini.model,
+    systemInstruction: loadPrompt("scenarios"),
+    generationConfig: {
+      temperature: 0.15,
+      responseMimeType: "application/json",
+    },
+  });
   const ctxPayload = JSON.stringify(
     {
       current_week: {
@@ -88,7 +95,7 @@ export const pdfToScenarios = async (
       text:
         "Here is the participant's current week and the events already on their calendar. Use them to anchor and avoid overlaps.\n\n" +
         ctxPayload +
-        "\n\nNow extract scenarios as JSON.",
+        "\n\nRead the PDF end-to-end. Extract EVERY distinct scenario — do not merge or skip any. Emit JSON now.",
     },
   ]);
   const text = result.response.text();
@@ -148,11 +155,23 @@ export type ScenarioContextLite = {
   end: string;
 };
 
+export type PriorResponseLite = {
+  scenario_title: string;
+  scenario_description: string;
+  user_reason: string;
+  user_decision: "accept" | "critique";
+  user_feedback?: string | null;
+  agent_summary: string;
+  agent_actions: unknown[];
+  user_actions: unknown[];
+};
+
 export type SchedulerInput = {
   profileMarkdown: string;
   calendarEvents: CalendarEventLite[];
   scenarioContext: ScenarioContextLite[];
   scenario: { title: string; description: string; promptSummary?: string };
+  priorResponses?: PriorResponseLite[];
   timezone?: string;
 };
 
@@ -162,6 +181,7 @@ export const proposeChoice = async (input: SchedulerInput): Promise<AgentProposa
     profile_markdown: input.profileMarkdown,
     scenario_context: input.scenarioContext,
     other_calendar_events: input.calendarEvents,
+    prior_responses: input.priorResponses ?? [],
     scenario: input.scenario,
     timezone: input.timezone ?? "Europe/Rome",
   };
