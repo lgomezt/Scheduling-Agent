@@ -21,7 +21,7 @@ export type AgentProposal = {
   contextEvents: { context_index: number; title: string; start: string; end: string }[];
 };
 
-export const proposeAgent = (scenarioId: number, userReason?: string) =>
+export const proposeAgent = (scenarioId: number | string, userReason?: string) =>
   api<AgentProposal>(`/api/agent/propose/${scenarioId}`, {
     method: "POST",
     body: JSON.stringify({ userReason: userReason ?? "" }),
@@ -35,7 +35,7 @@ export type AnswerInput = {
   feedback?: string;
 };
 
-export const submitAnswer = (scenarioId: number, input: AnswerInput) =>
+export const submitAnswer = (scenarioId: number | string, input: AnswerInput) =>
   api<{ ok: true; userActions: unknown[] }>(`/api/agent/answer/${scenarioId}`, {
     method: "POST",
     body: JSON.stringify(input),

@@ -42,16 +42,16 @@ export const Workspace = () => {
   });
 
   const currentScenario = scenarios[currentIndex];
-  const activatedRef = useRef<number | null>(null);
+  const activatedRef = useRef<string | null>(null);
   useEffect(() => {
     if (!currentScenario) return;
-    if (activatedRef.current === currentScenario.id) return;
-    activatedRef.current = currentScenario.id;
+    if (activatedRef.current === String(currentScenario.id)) return;
+    activatedRef.current = String(currentScenario.id);
     activate.mutate(currentScenario.id);
   }, [currentScenario, activate]);
 
   const propose = useMutation({
-    mutationFn: (vars: { scenarioId: number; userReason: string }) =>
+    mutationFn: (vars: { scenarioId: number | string; userReason: string }) =>
       proposeAgent(vars.scenarioId, vars.userReason),
     onSuccess: (p) => {
       setProposal(p);

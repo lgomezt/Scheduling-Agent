@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc && npm run copy-assets",
-    "copy-assets": "mkdir -p dist/db dist/prompts && cp src/db/schema.sql dist/db/ && cp src/prompts/*.md dist/prompts/",
+    "copy-assets": "mkdir -p dist/db dist/prompts dist/study/prompts && cp src/db/schema.sql dist/db/ && cp src/prompts/*.md dist/prompts/ && cp src/study/study-config.json dist/study/ && cp src/study/prompts/*.md dist/study/prompts/",
     "start": "node dist/index.js"
   },
   "dependencies": {

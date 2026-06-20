@@ -4,6 +4,8 @@ export type Session = {
   id: string;
   status: "in_progress" | "completed";
   currentScenarioIndex: number;
+  participantCode: string | null;
+  studyVersion: string | null;
   calendarConfirmedAt: string | null;
   createdAt: string;
   completedAt: string | null;

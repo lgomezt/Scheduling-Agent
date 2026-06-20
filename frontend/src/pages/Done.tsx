@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { Download } from "lucide-react";
 import { getLatestSession, createSession } from "../api/sessions";
 
 export const Done = () => {
@@ -19,7 +20,7 @@ export const Done = () => {
     onSuccess: (s) => {
       qc.setQueryData(["session", "current"], s);
       qc.setQueryData(["session", "latest"], s);
-      navigate("/onboarding/calendar");
+      navigate("/onboarding");
     },
   });
 
@@ -37,7 +38,7 @@ export const Done = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `scheduling-agent-${session.id}.json`;
+      a.download = `scheduling-study-${session.id}.json`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -52,34 +53,36 @@ export const Done = () => {
   if (isLoading) return <div className="screen-center">Loading…</div>;
 
   return (
-    <div className="screen done-screen">
-      <h2>Session complete</h2>
-      <p className="muted">
-        Thanks for working through every scenario. Download your log to share with the researcher,
-        then optionally start a new session.
-      </p>
-      <div className="done-actions">
+    <div className="study-screen">
+      <div className="study-card done-screen">
+        <div className="step-label">STEP 5 OF 5 · COMPLETE</div>
+        <h1>Session complete</h1>
+        <p className="study-subtitle">
+          Download the study log to share with the researcher.
+        </p>
+        <div className="done-actions">
         <button
           type="button"
           className="btn-primary"
           onClick={handleDownload}
           disabled={!session || downloading}
         >
-          {downloading ? "Preparing…" : "Download log (JSON)"}
+          {downloading ? "Preparing..." : <><Download size={16} /> Download log (JSON)</>}
         </button>
         <button
           className="btn-secondary"
           onClick={() => startNew.mutate()}
           disabled={startNew.isPending}
         >
-          {startNew.isPending ? "Starting…" : "Start a new session"}
+          {startNew.isPending ? "Starting..." : "Start a new session"}
         </button>
+        </div>
+        {downloadError ? (
+          <p className="form-error" role="alert">
+            {downloadError}
+          </p>
+        ) : null}
       </div>
-      {downloadError ? (
-        <p className="muted" role="alert" style={{ color: "var(--danger)" }}>
-          {downloadError}
-        </p>
-      ) : null}
     </div>
   );
 };

@@ -1,0 +1,360 @@
+{
+  "version": "2026-06-20-v1",
+  "title": "Demographic Survey",
+  "questionnaires": [
+    {
+      "id": "demographic",
+      "title": "Demographic questionnaire",
+      "description": "These questions help describe the study sample.",
+      "questions": [
+        {
+          "id": "age_range",
+          "type": "single_choice",
+          "label": "Age range",
+          "required": true,
+          "choices": [
+            { "id": "18_20", "label": "18-20" },
+            { "id": "21_23", "label": "21-23" },
+            { "id": "24_26", "label": "24-26" },
+            { "id": "27_30", "label": "27-30" },
+            { "id": "over_30", "label": "Over 30" },
+            { "id": "prefer_not", "label": "Prefer not to say" }
+          ]
+        },
+        {
+          "id": "gender_identity",
+          "type": "single_choice",
+          "label": "Gender identity",
+          "required": true,
+          "choices": [
+            { "id": "woman", "label": "Woman" },
+            { "id": "man", "label": "Man" },
+            { "id": "non_binary", "label": "Non-binary" },
+            { "id": "another_identity", "label": "Another identity" },
+            { "id": "prefer_not", "label": "Prefer not to say" }
+          ]
+        },
+        {
+          "id": "level_of_study",
+          "type": "single_choice",
+          "label": "Level of study",
+          "required": true,
+          "choices": [
+            { "id": "undergraduate", "label": "Undergraduate" },
+            { "id": "masters", "label": "Master's" },
+            { "id": "phd", "label": "PhD" },
+            { "id": "other_graduate_professional", "label": "Other graduate or professional program" }
+          ]
+        },
+        {
+          "id": "faculty_area",
+          "type": "single_choice",
+          "label": "Faculty / academic area",
+          "required": true,
+          "choices": [
+            { "id": "engineering", "label": "Engineering" },
+            { "id": "mathematics", "label": "Mathematics" },
+            { "id": "science", "label": "Science" },
+            { "id": "arts", "label": "Arts" },
+            { "id": "environment", "label": "Environment" },
+            { "id": "health", "label": "Health" },
+            { "id": "interdisciplinary_other", "label": "Interdisciplinary / Other" }
+          ]
+        },
+        {
+          "id": "program_stage",
+          "type": "single_choice",
+          "label": "Program stage / seniority",
+          "required": true,
+          "choices": [
+            { "id": "early_undergraduate", "label": "Early stage (1st-2nd year undergraduate)" },
+            { "id": "late_undergraduate", "label": "Late stage undergraduate" },
+            { "id": "early_graduate", "label": "Early graduate (coursework-focused)" },
+            { "id": "late_graduate", "label": "Late graduate (research-focused)" }
+          ]
+        },
+        {
+          "id": "enrollment_status",
+          "type": "single_choice",
+          "label": "Enrollment status",
+          "required": true,
+          "choices": [
+            { "id": "full_time", "label": "Full-time" },
+            { "id": "part_time", "label": "Part-time" }
+          ]
+        },
+        {
+          "id": "employment_status",
+          "type": "single_choice",
+          "label": "Employment status during the academic term",
+          "required": true,
+          "choices": [
+            { "id": "not_employed", "label": "Not employed" },
+            { "id": "part_time_20_or_less", "label": "Part-time (<= 20 hours/week)" },
+            { "id": "part_time_over_20", "label": "Part-time (> 20 hours/week)" },
+            { "id": "full_time", "label": "Full-time" },
+            { "id": "prefer_not", "label": "Prefer not to say" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "preferences_values",
+      "title": "High-level preferences and values questionnaire",
+      "description": "These questions elicit your values, work/study context, and scheduling preferences.",
+      "questions": [
+        {
+          "id": "participant_code",
+          "type": "text",
+          "label": "Please enter the participant code provided by the researcher.",
+          "required": true
+        },
+        {
+          "id": "current_position",
+          "type": "text",
+          "label": "What is your current work or study position?",
+          "helpText": "For example: undergraduate student, master's student, PhD student, researcher, employee, freelancer, or intern.",
+          "required": true
+        },
+        {
+          "id": "common_work_tasks",
+          "type": "textarea",
+          "label": "For which tasks are you most often called upon during worktime?",
+          "required": true
+        },
+        {
+          "id": "work_social_organization",
+          "type": "single_choice",
+          "label": "How would you describe the social organization of your work/study environment?",
+          "required": true,
+          "choices": [
+            { "id": "mostly_hierarchical", "label": "Mostly hierarchical: seniority and formal roles strongly shape decisions" },
+            { "id": "moderately_hierarchical", "label": "Moderately hierarchical: roles matter, but negotiation is possible" },
+            { "id": "mostly_horizontal", "label": "Mostly horizontal: decisions are usually negotiated among peers" },
+            { "id": "mixed_context_dependent", "label": "Mixed or context-dependent" },
+            { "id": "not_sure", "label": "Not sure / Difficult to say" }
+          ]
+        },
+        {
+          "id": "schedule_autonomy",
+          "type": "scale",
+          "label": "How much autonomy do you have in organizing your tasks and schedule?",
+          "required": true,
+          "min": 1,
+          "max": 5,
+          "minLabel": "Very low",
+          "maxLabel": "Very high"
+        },
+        {
+          "id": "preferred_working_hours",
+          "type": "textarea",
+          "label": "What are your preferred working hours, and under what circumstances would you be willing to work or study outside them?",
+          "helpText": "For example: evenings, weekends, deadlines, emergencies, or requests from specific people.",
+          "required": true
+        },
+        {
+          "id": "relationship_importance",
+          "type": "scale",
+          "label": "When deciding whether to accept, decline, or renegotiate a meeting, how much does the relationship with the person asking matter?",
+          "required": true,
+          "min": 1,
+          "max": 5,
+          "minLabel": "Not at all",
+          "maxLabel": "Very much"
+        },
+        {
+          "id": "conflict_factors",
+          "type": "multi_choice",
+          "label": "When two meetings or commitments conflict, which factors matter most to you?",
+          "helpText": "Select up to three.",
+          "required": true,
+          "maxSelections": 3,
+          "choices": [
+            { "id": "prior_commitments", "label": "Respecting prior commitments" },
+            { "id": "urgency", "label": "Responding to urgency" },
+            { "id": "helping_colleagues", "label": "Helping colleagues or collaborators" },
+            { "id": "senior_requests", "label": "Prioritizing requests from senior people or supervisors" },
+            { "id": "personal_focus_time", "label": "Protecting personal time or focus time" },
+            { "id": "negative_consequences", "label": "Avoiding negative consequences for others" },
+            { "id": "career_goals", "label": "Advancing long-term work or career goals" },
+            { "id": "fairness", "label": "Maintaining fairness among people" },
+            { "id": "relationships", "label": "Preserving good relationships" },
+            { "id": "other", "label": "Other" }
+          ]
+        },
+        {
+          "id": "availability_expectations",
+          "type": "textarea",
+          "label": "In your work/study environment, are there implicit or explicit expectations about being available, responsive, or flexible with your schedule?",
+          "required": true
+        },
+        {
+          "id": "decline_difficulty",
+          "type": "textarea",
+          "label": "What would usually make it socially or professionally difficult for you to decline or postpone a meeting?",
+          "helpText": "For example: the person asking, urgency, hierarchy, relationship history, prior favors, possible consequences, or workplace expectations.",
+          "required": true
+        },
+        {
+          "id": "priority_people_roles",
+          "type": "textarea",
+          "label": "Are there people or roles whose meeting requests are usually expected to take priority in your work/study environment? If yes, who and why?",
+          "required": true
+        },
+        {
+          "id": "success_requires_sacrifice",
+          "type": "textarea",
+          "label": "Do you believe achieving success in your work/study life requires sacrificing aspects of your personal life? Please briefly justify your answer.",
+          "required": true
+        },
+        {
+          "id": "balance_importance",
+          "type": "scale",
+          "label": "How important is maintaining a balance between your personal life and your work/study life to you?",
+          "required": true,
+          "min": 1,
+          "max": 5,
+          "minLabel": "Not important",
+          "maxLabel": "Very important"
+        },
+        {
+          "id": "well_structured_schedule",
+          "type": "textarea",
+          "label": "When you think of a well-structured schedule, what makes it so for you?",
+          "helpText": "For example: efficiency, balance, control, or flexibility.",
+          "required": true
+        },
+        {
+          "id": "time_management_change",
+          "type": "textarea",
+          "label": "If you could change one thing about how you currently manage your time between personal and work/study life, what would it be?",
+          "required": true
+        }
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "scenario_1_supervisor_request",
+      "title": "Scenario 1",
+      "prompt": "You have a meeting scheduled this afternoon with a junior colleague or intern who asked for your help with a task they need to complete by tomorrow. The meeting has already been postponed once. One hour before the meeting, your supervisor asks you to meet at the same time to discuss a project update. The supervisor does not specify whether the matter is urgent. What would you do?",
+      "options": [
+        { "id": "A", "label": "Keep the meeting with the junior colleague/intern and ask the supervisor to meet later." },
+        { "id": "B", "label": "Reschedule the meeting with the junior colleague/intern and meet the supervisor." },
+        { "id": "C", "label": "Ask the supervisor for more information about the urgency before deciding." },
+        { "id": "D", "label": "Try to shorten or split both meetings." },
+        { "id": "E", "label": "Other", "isOther": true }
+      ],
+      "reasoningPrompt": "Please explain why you ordered the options this way. Mention what mattered most to you, such as timing, urgency, prior commitments, the people involved, relationships, possible consequences, workplace expectations, personal or non-working time, fairness, or shared responsibility."
+    },
+    {
+      "id": "scenario_2_non_working_time",
+      "title": "Scenario 2",
+      "prompt": "It is late in the day. A colleague asks you to schedule a meeting outside your usual working or studying hours because they need your input for a project deadline the next working day. The colleague says that the issue came up earlier that day. What would you do?",
+      "options": [
+        { "id": "A", "label": "Accept a meeting outside your usual working/studying hours." },
+        { "id": "B", "label": "Decline and suggest meeting during regular working/studying hours." },
+        { "id": "C", "label": "Offer written or asynchronous feedback instead of scheduling a meeting." },
+        { "id": "D", "label": "Ask whether someone else can help before deciding." },
+        { "id": "E", "label": "Other", "isOther": true }
+      ],
+      "reasoningPrompt": "Please explain why you ordered the options this way. Mention what mattered most to you, such as timing, urgency, prior commitments, the people involved, relationships, possible consequences, workplace expectations, personal or non-working time, fairness, or shared responsibility."
+    },
+    {
+      "id": "scenario_3_fast_scheduling",
+      "title": "Scenario 3",
+      "prompt": "A project group of five people needs to schedule a meeting to discuss the next steps of an ongoing task. Four people are available tomorrow. The fifth person is not available until next week. If the meeting is held tomorrow, the group can decide earlier and have more time to work on the task. If the meeting is postponed until next week, everyone can attend, but there will be less time left before the next deadline.",
+      "options": [
+        { "id": "A", "label": "Schedule the meeting tomorrow with the four available people." },
+        { "id": "B", "label": "Wait until next week so that everyone can attend." },
+        { "id": "C", "label": "Schedule the meeting tomorrow and ask the unavailable person whether they want to share input in advance." },
+        { "id": "D", "label": "Schedule the meeting tomorrow and send the unavailable person a summary afterwards." },
+        { "id": "E", "label": "Other", "isOther": true }
+      ],
+      "reasoningPrompt": "Please explain why you ordered the options this way. Mention what mattered most to you, such as timing, urgency, prior commitments, the people involved, relationships, possible consequences, workplace expectations, personal or non-working time, fairness, or shared responsibility."
+    },
+    {
+      "id": "scenario_4_planned_work",
+      "title": "Scenario 4",
+      "prompt": "You need to make progress on an individual long-term task that does not have an immediate deadline, but requires sustained attention, by the end of the week. On Wednesday, a colleague asks to schedule a meeting for the next day to coordinate work on a different ongoing task that involves both of you. Meeting this week would help the shared task move forward sooner. Scheduling the meeting next week would give you more time to complete your individual task, but would delay the coordination with your colleague.",
+      "options": [
+        { "id": "A", "label": "Accept the meeting for the next day." },
+        { "id": "B", "label": "Suggest scheduling the meeting next week." },
+        { "id": "C", "label": "Suggest a shorter meeting for the next day." },
+        { "id": "D", "label": "Offer written or asynchronous input instead of scheduling a meeting." },
+        { "id": "E", "label": "Other", "isOther": true }
+      ],
+      "reasoningPrompt": "Please explain why you ordered the options this way. Mention what mattered most to you, such as timing, urgency, prior commitments, the people involved, relationships, possible consequences, workplace expectations, personal or non-working time, fairness, or shared responsibility."
+    },
+    {
+      "id": "scenario_5_self_interest_obligation",
+      "title": "Scenario 5",
+      "prompt": "You have a meeting scheduled with a peer to work on a shared task. The meeting was arranged in advance, and both of you are expected to contribute. You then receive an invitation from someone outside your usual project group to discuss a possible future project or opportunity. The proposed time overlaps with your existing meeting. The invitation asks you to confirm by the end of the day, and no alternative times are currently offered. What would you do?",
+      "options": [
+        { "id": "A", "label": "Keep the existing meeting with your peer and propose a new time for the new invitation." },
+        { "id": "B", "label": "Reschedule the meeting with your peer and accept the new invitation." },
+        { "id": "C", "label": "Ask your peer whether they can reschedule before deciding." },
+        { "id": "D", "label": "Accept the new invitation only if your peer agrees to reschedule." },
+        { "id": "E", "label": "Other", "isOther": true }
+      ],
+      "reasoningPrompt": "Please explain why you ordered the options this way. Mention what mattered most to you, such as timing, urgency, prior commitments, the people involved, relationships, possible consequences, workplace expectations, personal or non-working time, fairness, or shared responsibility."
+    }
+  ],
+  "modelConditions": [
+    {
+      "id": "full_context",
+      "label": "Full survey context",
+      "description": "Uses all questionnaire responses.",
+      "includedQuestionIds": null,
+      "initialProfilePrompt": "initial-profile-full",
+      "scenarioPrompt": "scenario-ranking",
+      "finalProfilePrompt": "final-profile-update"
+    },
+    {
+      "id": "reduced_context",
+      "label": "Reduced survey context",
+      "description": "Uses an editable subset of questionnaire responses.",
+      "includedQuestionIds": [
+        "participant_code",
+        "current_position",
+        "common_work_tasks",
+        "schedule_autonomy",
+        "preferred_working_hours",
+        "relationship_importance",
+        "conflict_factors",
+        "balance_importance",
+        "well_structured_schedule",
+        "time_management_change"
+      ],
+      "initialProfilePrompt": "initial-profile-reduced",
+      "scenarioPrompt": "scenario-ranking",
+      "finalProfilePrompt": "final-profile-update"
+    }
+  ],
+  "finalProfileFollowup": {
+    "enabled": true,
+    "questions": [
+      {
+        "id": "accuracy",
+        "label": "Which final profile feels more accurate in representing you and the context in which you make scheduling decisions?",
+        "required": true
+      },
+      {
+        "id": "improvement",
+        "label": "Which profile set improved more from the initial to the final version?",
+        "required": true
+      },
+      {
+        "id": "trust",
+        "label": "Which system would you trust more to support you in future scheduling conflicts?",
+        "required": true
+      }
+    ],
+    "choices": [
+      { "id": "A", "label": "Profile Set A" },
+      { "id": "B", "label": "Profile Set B" },
+      { "id": "both", "label": "Both equally" },
+      { "id": "neither", "label": "Neither" }
+    ]
+  }
+}

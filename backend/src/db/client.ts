@@ -48,6 +48,46 @@ if (!hasColumn("scenario_answers", "agent_actions_json")) {
 if (!hasColumn("sessions", "calendar_confirmed_at")) {
   db.exec("ALTER TABLE sessions ADD COLUMN calendar_confirmed_at TEXT");
 }
+if (!hasColumn("sessions", "participant_code")) {
+  db.exec("ALTER TABLE sessions ADD COLUMN participant_code TEXT");
+}
+if (!hasColumn("sessions", "study_version")) {
+  db.exec("ALTER TABLE sessions ADD COLUMN study_version TEXT");
+}
+
+const addColumnIfMissing = (table: string, column: string, definition: string) => {
+  if (!hasColumn(table, column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
+};
+
+for (const [column, definition] of [
+  ["initial_model_name", "TEXT"],
+  ["initial_prompt_name", "TEXT"],
+  ["initial_system_prompt_text", "TEXT"],
+  ["initial_system_prompt_hash", "TEXT"],
+  ["initial_started_at", "TEXT"],
+  ["initial_completed_at", "TEXT"],
+  ["final_model_name", "TEXT"],
+  ["final_prompt_name", "TEXT"],
+  ["final_system_prompt_text", "TEXT"],
+  ["final_system_prompt_hash", "TEXT"],
+  ["final_started_at", "TEXT"],
+  ["final_completed_at", "TEXT"],
+] as const) {
+  addColumnIfMissing("model_profiles", column, definition);
+}
+
+for (const [column, definition] of [
+  ["model_name", "TEXT"],
+  ["prompt_name", "TEXT"],
+  ["system_prompt_text", "TEXT"],
+  ["system_prompt_hash", "TEXT"],
+  ["started_at", "TEXT"],
+  ["completed_at", "TEXT"],
+] as const) {
+  addColumnIfMissing("model_scenario_outputs", column, definition);
+}
 
 const calendarTableSql = (
   db.prepare("SELECT sql FROM sqlite_schema WHERE type='table' AND name='calendar_events'")

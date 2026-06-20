@@ -5,6 +5,7 @@ import path from "node:path";
 import { db } from "../db/client.js";
 import { requireAuth } from "../auth/session.js";
 import { config } from "../config.js";
+import { getStudyConfig } from "../study/config.js";
 
 export const sessionsRouter = Router();
 
@@ -13,6 +14,8 @@ type SessionRow = {
   user_id: number;
   status: string;
   current_scenario_index: number;
+  participant_code: string | null;
+  study_version: string | null;
   calendar_confirmed_at: string | null;
   created_at: string;
   completed_at: string | null;
@@ -22,6 +25,8 @@ const toApi = (row: SessionRow) => ({
   id: row.id,
   status: row.status,
   currentScenarioIndex: row.current_scenario_index,
+  participantCode: row.participant_code,
+  studyVersion: row.study_version,
   calendarConfirmedAt: row.calendar_confirmed_at,
   createdAt: row.created_at,
   completedAt: row.completed_at,
@@ -29,7 +34,11 @@ const toApi = (row: SessionRow) => ({
 
 sessionsRouter.post("/", requireAuth, (req, res) => {
   const id = crypto.randomUUID();
-  db.prepare("INSERT INTO sessions (id, user_id) VALUES (?, ?)").run(id, req.userId);
+  db.prepare("INSERT INTO sessions (id, user_id, study_version) VALUES (?, ?, ?)").run(
+    id,
+    req.userId,
+    getStudyConfig().version,
+  );
   const row = db.prepare("SELECT * FROM sessions WHERE id = ?").get(id) as SessionRow;
   res.json(toApi(row));
 });
