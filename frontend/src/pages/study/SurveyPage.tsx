@@ -18,6 +18,22 @@ type Props = {
   nextPath: string;
 };
 
+const hasQuestionAnswer = (question: StudyQuestion, value: unknown) => {
+  if (question.type === "text" || question.type === "textarea") {
+    return typeof value === "string" && value.trim().length > 0;
+  }
+  if (question.type === "single_choice") {
+    return typeof value === "string" && value.trim().length > 0;
+  }
+  if (question.type === "multi_choice") {
+    return Array.isArray(value) && value.length > 0;
+  }
+  if (question.type === "scale") {
+    return typeof value === "number";
+  }
+  return false;
+};
+
 export const SurveyPage = ({ questionnaireId, stepNumber, stepTitle, nextPath }: Props) => {
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -102,6 +118,16 @@ export const SurveyPage = ({ questionnaireId, stepNumber, stepTitle, nextPath }:
     setQuestionIndex((index) => Math.min(index + 1, questions.length - 1));
   };
 
+  const skipQuestion = () => {
+    if (questionIndex >= questions.length - 1) {
+      saveAndGoNext.mutate();
+      return;
+    }
+    setQuestionIndex((index) => Math.min(index + 1, questions.length - 1));
+  };
+
+  const canGoNext = hasQuestionAnswer(current, responses[current.id]);
+
   return (
     <div className="study-screen">
       <div className="study-card survey-card one-question-card">
@@ -134,10 +160,10 @@ export const SurveyPage = ({ questionnaireId, stepNumber, stepTitle, nextPath }:
           >
             Back
           </button>
-          <button type="button" className="btn-secondary" onClick={goNext} disabled={saveAndGoNext.isPending}>
+          <button type="button" className="btn-secondary" onClick={skipQuestion} disabled={saveAndGoNext.isPending}>
             Skip
           </button>
-          <button type="button" onClick={goNext} disabled={saveAndGoNext.isPending}>
+          <button type="button" onClick={goNext} disabled={!canGoNext || saveAndGoNext.isPending}>
             {saveAndGoNext.isPending ? (
               <>
                 <Loader2 className="spin-icon" size={16} /> Saving...

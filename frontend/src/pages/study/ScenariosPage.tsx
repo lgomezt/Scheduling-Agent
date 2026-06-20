@@ -15,13 +15,36 @@ import {
 } from "../../api/study";
 import { RankingList } from "../../components/study/RankingList";
 
-const emptyFeedback: ScenarioFeedback = {
-  closerChoice: "both",
-  scoreA: 3,
-  scoreB: 3,
+type FeedbackDraft = {
+  closerChoice: ScenarioFeedback["closerChoice"] | "";
+  scoreA: number | null;
+  scoreB: number | null;
+  commentA: string;
+  commentB: string;
+  comparisonComment: string;
+};
+
+const emptyFeedbackDraft: FeedbackDraft = {
+  closerChoice: "",
+  scoreA: null,
+  scoreB: null,
   commentA: "",
   commentB: "",
   comparisonComment: "",
+};
+
+const toScenarioFeedback = (draft: FeedbackDraft): ScenarioFeedback => {
+  if (!draft.closerChoice || draft.scoreA == null || draft.scoreB == null) {
+    throw new Error("Complete the model evaluation before continuing");
+  }
+  return {
+    closerChoice: draft.closerChoice,
+    scoreA: draft.scoreA,
+    scoreB: draft.scoreB,
+    commentA: draft.commentA,
+    commentB: draft.commentB,
+    comparisonComment: draft.comparisonComment,
+  };
 };
 
 export const ScenariosPage = () => {
@@ -46,7 +69,7 @@ export const ScenariosPage = () => {
   const [otherText, setOtherText] = useState("");
   const [localOutputs, setLocalOutputs] = useState<ModelOutput[] | null>(null);
   const [editingAnswer, setEditingAnswer] = useState(false);
-  const [feedback, setFeedback] = useState<ScenarioFeedback>(emptyFeedback);
+  const [feedback, setFeedback] = useState<FeedbackDraft>(emptyFeedbackDraft);
 
   useEffect(() => {
     if (!scenario) return;
@@ -65,7 +88,7 @@ export const ScenariosPage = () => {
             commentB: scenario.feedback.commentB,
             comparisonComment: scenario.feedback.comparisonComment,
           }
-        : emptyFeedback,
+        : emptyFeedbackDraft,
     );
   }, [scenario?.id]);
 
@@ -88,7 +111,8 @@ export const ScenariosPage = () => {
   });
 
   const saveFeedback = useMutation({
-    mutationFn: (override?: ScenarioFeedback) => submitScenarioFeedback(sessionId, scenario.id, override ?? feedback),
+    mutationFn: (override?: ScenarioFeedback) =>
+      submitScenarioFeedback(sessionId, scenario.id, override ?? toScenarioFeedback(feedback)),
     onSuccess: async (result) => {
       qc.invalidateQueries({ queryKey: ["scenarios", sessionId] });
       qc.invalidateQueries({ queryKey: ["session", "current"] });
@@ -125,8 +149,21 @@ export const ScenariosPage = () => {
 
   const modelOutputs = localOutputs ?? scenario.modelOutputs ?? [];
   const inComparison = modelOutputs.length === 2 && !editingAnswer;
-  const canSubmitRanking = reasoning.trim().length > 0;
+  const otherOption = scenario.options.find((option) => option.isOther);
+  const otherIndex = otherOption ? ranking.indexOf(otherOption.id) : -1;
+  const otherNeedsDetail = Boolean(otherOption && otherIndex >= 0 && otherIndex !== ranking.length - 1);
+  const rankingIsComplete =
+    ranking.length === scenario.options.length &&
+    new Set(ranking).size === ranking.length &&
+    scenario.options.every((option) => ranking.includes(option.id));
+  const canSubmitRanking =
+    rankingIsComplete &&
+    reasoning.trim().length > 0 &&
+    (!otherNeedsDetail || otherText.trim().length > 0);
   const canSubmitFeedback =
+    feedback.closerChoice !== "" &&
+    feedback.scoreA != null &&
+    feedback.scoreB != null &&
     feedback.commentA.trim().length > 0 &&
     feedback.commentB.trim().length > 0 &&
     feedback.comparisonComment.trim().length > 0;
@@ -151,6 +188,22 @@ export const ScenariosPage = () => {
               onChange={setRanking}
               disabled={submit.isPending || !!scenario.feedback}
             />
+
+            {otherOption && (otherNeedsDetail || otherText.trim().length > 0) ? (
+              <label className="study-field flat-field transparent-field">
+                <span>
+                  Other details {otherNeedsDetail ? <span className="required-mark">*</span> : null}
+                </span>
+                <p className="inline-field-note">Only required when Other is not ranked last.</p>
+                <input
+                  className="text-input"
+                  value={otherText}
+                  onChange={(event) => setOtherText(event.target.value)}
+                  disabled={submit.isPending || !!scenario.feedback}
+                  placeholder="Explain what Other means, e.g., a different scheduling action you would take."
+                />
+              </label>
+            ) : null}
 
             <label className="study-field flat-field transparent-field">
               <span>
@@ -277,12 +330,12 @@ const ComparisonPanel = ({
   userRanking: RankedOption[];
   userReasoning: string;
   userOtherText?: string | null;
-  feedback: ScenarioFeedback;
-  setFeedback: (feedback: ScenarioFeedback) => void;
+  feedback: FeedbackDraft;
+  setFeedback: (feedback: FeedbackDraft) => void;
   disabled?: boolean;
 }) => {
   const sorted = useMemo(() => [...outputs].sort((a, b) => a.displayLabel.localeCompare(b.displayLabel)), [outputs]);
-  const update = <K extends keyof ScenarioFeedback>(key: K, value: ScenarioFeedback[K]) =>
+  const update = <K extends keyof FeedbackDraft>(key: K, value: FeedbackDraft[K]) =>
     setFeedback({ ...feedback, [key]: value });
 
   return (
@@ -319,7 +372,7 @@ const ComparisonPanel = ({
                 type="radio"
                 name={`${scenario.id}_closer`}
                 checked={feedback.closerChoice === value}
-                onChange={() => update("closerChoice", value as ScenarioFeedback["closerChoice"])}
+                onChange={() => update("closerChoice", value as FeedbackDraft["closerChoice"])}
                 disabled={disabled}
               />
               <span>{label}</span>
@@ -406,7 +459,7 @@ const ScoreField = ({
   disabled,
 }: {
   label: string;
-  value: number;
+  value: number | null;
   onChange: (value: number) => void;
   disabled?: boolean;
 }) => (

@@ -89,6 +89,10 @@ export const validateScenarioRanking = (scenario: StudyScenario, ranking: unknow
   for (const optionId of optionIds) {
     if (!ranking.includes(optionId)) throw new Error(`Ranking is missing option ${optionId}`);
   }
+  const otherOption = scenario.options.find((option) => option.isOther);
+  if (otherOption && ranking[ranking.length - 1] !== otherOption.id && !isNonEmptyString(otherText)) {
+    throw new Error("Other details are required when Other is not ranked last");
+  }
   return {
     ranking,
     otherText: isNonEmptyString(otherText) ? otherText.trim() : null,

@@ -771,7 +771,8 @@ a.btn-primary { display: inline-block; text-decoration: none; background: var(--
   isolation: isolate;
   display: flex;
   justify-content: center;
-  overflow: hidden;
+  align-items: center;
+  overflow: auto;
 }
 
 .study-screen::before {
@@ -810,7 +811,6 @@ a.btn-primary { display: inline-block; text-decoration: none; background: var(--
 
 .study-card {
   width: min(100%, 920px);
-  align-self: flex-start;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -848,6 +848,10 @@ a.btn-primary { display: inline-block; text-decoration: none; background: var(--
 }
 
 .survey-card { width: min(100%, 860px); }
+.scenario-card,
+.followup-card {
+  align-self: flex-start;
+}
 .scenario-card { width: min(100%, 980px); }
 .followup-card { width: min(100%, 1160px); }
 .compact-status {
