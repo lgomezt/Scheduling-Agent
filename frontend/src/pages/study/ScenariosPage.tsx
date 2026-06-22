@@ -380,7 +380,7 @@ const AgentReviewPanel = ({
       </div>
 
       <ScoreField
-        label="How well does the agent's reasoning reflect your values?"
+        label="How well does the agent’s explanation reflect your own?"
         value={feedback.reasoningAlignmentScore}
         onChange={(value) => update("reasoningAlignmentScore", value)}
         disabled={disabled}

@@ -108,7 +108,7 @@
   "scenarios": [
     {
       "id": "scenario_1_supervisor_request_prior_commitment",
-      "title": "Scenario 1 - Supervisor Request and Prior Commitment",
+      "title": "Scenario 1",
       "prompt": "You are scheduled to meet at 3:00 p.m. today with Maya, a junior colleague in your team. Maya asked for your help with a task she needs to complete by tomorrow morning. This meeting has already been postponed once earlier this week. At 2:15 p.m., your supervisor sends you the following message: \"Can we meet at 3:00? I'd like to go over the project update before tomorrow.\" The message does not specify whether the matter is urgent or whether another time would work. Since it is already 2:15 p.m., asking a follow-up question may not leave much time before the 3:00 p.m. meeting. You need to decide how to respond.",
       "options": [
         { "id": "A", "label": "Keep the meeting with Maya and offer your supervisor another time later today." },
@@ -123,7 +123,7 @@
     },
     {
       "id": "scenario_2_after_hours_request_deadline",
-      "title": "Scenario 2 - After-Hours Request and Next-Day Deadline",
+      "title": "Scenario 2",
       "prompt": "It is 5:30 p.m., and you usually stop working or studying at 6:00 p.m. You had planned to keep the evening free. At 5:35 p.m., a colleague, Leo, sends you the following message: \"Could we have a 30-minute call tonight around 7:30? I need your input on the project document before tomorrow's noon deadline.\" You worked on a related part of the project last week, but you were not previously told that your input would be needed tonight. Leo says the issue came up earlier today, but he was not able to contact you until now. If you do not help tonight, Leo may have less time to use your input before the deadline. If you do help tonight, you would be using time you had planned to keep free. You need to decide how to respond.",
       "options": [
         { "id": "A", "label": "Accept the 7:30 p.m. call." },
@@ -138,7 +138,7 @@
     },
     {
       "id": "scenario_3_earlier_meeting_missing_participant",
-      "title": "Scenario 3 - Earlier Meeting and Missing Participant",
+      "title": "Scenario 3",
       "prompt": "A project group of five people is trying to schedule a meeting to decide the next steps for an ongoing task. The next deadline is at the end of next week. Four members of the group are available tomorrow afternoon. The fifth member, Alex, replies: \"I can't make it tomorrow. I'm only available next week.\" In the group chat, some people describe the meeting as a quick update, while others say the group needs to decide who will take responsibility for the next parts. If the meeting happens tomorrow, the group can move forward earlier, but some decisions may be made before Alex can take part. If it happens next week, everyone can attend, but there will be less time to act before the deadline. You need to decide what to propose.",
       "options": [
         { "id": "A", "label": "Schedule the meeting tomorrow with the four available people." },
@@ -153,7 +153,7 @@
     },
     {
       "id": "scenario_4_planned_focus_shared_coordination",
-      "title": "Scenario 4 - Planned Focus Time and Shared Coordination",
+      "title": "Scenario 4",
       "prompt": "It is Wednesday morning. You had planned to use Thursday afternoon to work on an individual task that requires sustained attention. The task is not due tomorrow, but you planned to make meaningful progress on it by the end of the week. On Wednesday afternoon, a colleague, Daniel, sends you the following message: \"Could we meet tomorrow afternoon to coordinate the next part of the shared task? I think it would help us avoid problems later.\" From Daniel's message, it is unclear whether the shared task is currently blocked or whether the meeting would mainly help prevent possible issues later. You could move some of your individual work to Friday morning, but Friday is already partly occupied by other commitments. If you meet with Daniel on Thursday, you may lose part of the focused time you had planned. If you postpone the meeting or handle the coordination asynchronously, the shared task may move forward more slowly or with less clarity. You need to decide how to respond.",
       "options": [
         { "id": "A", "label": "Accept the Thursday meeting with Daniel." },
@@ -168,7 +168,7 @@
     },
     {
       "id": "scenario_5_existing_shared_meeting_new_opportunity",
-      "title": "Scenario 5 - Existing Shared Meeting and New Opportunity",
+      "title": "Scenario 5",
       "prompt": "You have a meeting scheduled tomorrow afternoon with Sofia, a peer in your project group, to work on a shared task. The meeting was arranged last week, and both of you are expected to contribute. Later that day, you receive an email from Dr. Patel, someone outside your usual project group, inviting you to discuss a possible future project. Dr. Patel attaches a short project description and asks you to read it before the meeting and think about whether it connects to the work you are already doing. The meeting with Dr. Patel would take place the day after tomorrow in the morning, so it does not directly overlap with your meeting with Sofia. However, if you accept the invitation, you would need to spend part of tomorrow reading the material and preparing for the discussion. This would leave you with less time and attention for the meeting with Sofia than you had originally planned. The invitation from Dr. Patel could be a useful opportunity, but it is not clear whether there will be another chance to discuss it. Sofia has not been asked whether the shared meeting could be changed. You need to decide how to handle the situation.",
       "options": [
         { "id": "A", "label": "Keep the meeting with Sofia as planned and spend less time preparing for Dr. Patel's meeting." },
