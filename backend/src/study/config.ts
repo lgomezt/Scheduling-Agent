@@ -38,28 +38,23 @@ const scenarioSchema = z.object({
   prompt: z.string().min(1),
   options: z.array(choiceSchema).min(2),
   reasoningPrompt: z.string().min(1),
+  informationNeedsPrompt: z.string().min(1),
+  conditionalChangePrompt: z.string().min(1),
 });
 
-const modelConditionSchema = z.object({
+const agentSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
   description: z.string().optional(),
-  includedQuestionIds: z.array(z.string().min(1)).nullable(),
   initialProfilePrompt: z.string().min(1),
   scenarioPrompt: z.string().min(1),
   finalProfilePrompt: z.string().min(1),
 });
 
-const followupQuestionSchema = z.object({
-  id: z.string().min(1),
-  label: z.string().min(1),
-  required: z.boolean().default(true),
-});
-
-const finalProfileFollowupSchema = z.object({
+const finalReflectionSchema = z.object({
   enabled: z.boolean(),
-  questions: z.array(followupQuestionSchema).min(1),
-  choices: z.array(choiceSchema).min(2),
+  scorePrompt: z.string().min(1),
+  commentPrompt: z.string().min(1),
 });
 
 const studyConfigSchema = z.object({
@@ -67,15 +62,15 @@ const studyConfigSchema = z.object({
   title: z.string().min(1),
   questionnaires: z.array(questionnaireSchema).min(1),
   scenarios: z.array(scenarioSchema).min(1),
-  modelConditions: z.array(modelConditionSchema).length(2),
-  finalProfileFollowup: finalProfileFollowupSchema,
+  agent: agentSchema,
+  finalProfileReflection: finalReflectionSchema,
 });
 
 export type StudyChoice = z.infer<typeof choiceSchema>;
 export type StudyQuestion = z.infer<typeof questionSchema>;
 export type StudyQuestionnaire = z.infer<typeof questionnaireSchema>;
 export type StudyScenario = z.infer<typeof scenarioSchema>;
-export type ModelCondition = z.infer<typeof modelConditionSchema>;
+export type StudyAgent = z.infer<typeof agentSchema>;
 export type StudyConfig = z.infer<typeof studyConfigSchema>;
 
 const requireUnique = (values: string[], label: string) => {
@@ -131,29 +126,13 @@ const validateConfig = (config: StudyConfig): StudyConfig => {
     }
   }
 
-  requireUnique(config.modelConditions.map((c) => c.id), "model condition ids");
-  for (const condition of config.modelConditions) {
-    for (const promptName of [
-      condition.initialProfilePrompt,
-      condition.scenarioPrompt,
-      condition.finalProfilePrompt,
-    ]) {
-      validatePromptExists(promptName);
-    }
-    if (condition.includedQuestionIds) {
-      for (const questionId of condition.includedQuestionIds) {
-        if (!questionIds.has(questionId)) {
-          throw new Error(
-            `Invalid study config: condition ${condition.id} references unknown question ${questionId}`,
-          );
-        }
-      }
-      requireUnique(condition.includedQuestionIds, `includedQuestionIds for ${condition.id}`);
-    }
+  for (const promptName of [
+    config.agent.initialProfilePrompt,
+    config.agent.scenarioPrompt,
+    config.agent.finalProfilePrompt,
+  ]) {
+    validatePromptExists(promptName);
   }
-
-  requireUnique(config.finalProfileFollowup.questions.map((q) => q.id), "follow-up question ids");
-  requireUnique(config.finalProfileFollowup.choices.map((c) => c.id), "follow-up choice ids");
 
   return config;
 };
@@ -185,7 +164,12 @@ export const getVisibleStudyConfig = () => {
         suggestedEnd: "",
       })),
     })),
-    finalProfileFollowup: config.finalProfileFollowup,
+    agent: {
+      id: config.agent.id,
+      label: config.agent.label,
+      description: config.agent.description,
+    },
+    finalProfileReflection: config.finalProfileReflection,
   };
 };
 
@@ -197,11 +181,6 @@ export const allStudyQuestions = (): StudyQuestion[] =>
 
 export const studyQuestionById = (questionId: string): StudyQuestion | undefined =>
   allStudyQuestions().find((question) => question.id === questionId);
-
-export const conditionQuestionIds = (condition: ModelCondition): string[] => {
-  const allIds = allStudyQuestions().map((question) => question.id);
-  return condition.includedQuestionIds ?? allIds;
-};
 
 export const scenarioById = (scenarioId: string): StudyScenario | undefined =>
   getStudyConfig().scenarios.find((scenario) => scenario.id === scenarioId);

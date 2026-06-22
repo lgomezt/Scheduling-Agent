@@ -40,20 +40,16 @@ export type RankedOption = {
   label: string;
 };
 
-export type ModelOutput = {
-  displayLabel: "A" | "B";
+export type AgentOutput = {
+  agentId: string;
   ranking: RankedOption[];
   reasoning: string;
   error?: string | null;
 };
 
 export type ScenarioFeedback = {
-  closerChoice: "A" | "B" | "both" | "neither";
-  scoreA: number;
-  scoreB: number;
-  commentA: string;
-  commentB: string;
-  comparisonComment: string;
+  reasoningAlignmentScore: number;
+  comment: string;
 };
 
 export type StudyScenario = {
@@ -62,6 +58,8 @@ export type StudyScenario = {
   prompt: string;
   description: string;
   reasoningPrompt: string;
+  informationNeedsPrompt: string;
+  conditionalChangePrompt: string;
   options: ScenarioOption[];
   promptSummary: string | null;
   contextEvents: Array<{ title: string; start: string; end: string }>;
@@ -69,18 +67,14 @@ export type StudyScenario = {
     ranking: RankedOption[];
     otherText: string | null;
     reasoning: string;
+    informationNeeds: string;
+    conditionalChange: string;
     createdAt: string;
     updatedAt: string;
   } | null;
-  modelOutputs?: ModelOutput[];
+  agentOutput?: AgentOutput | null;
   feedback?: (ScenarioFeedback & { createdAt: string; updatedAt: string }) | null;
   skip?: { skippedAt: string } | null;
-};
-
-export type FollowupQuestion = {
-  id: string;
-  label: string;
-  required: boolean;
 };
 
 export type StudyConfig = {
@@ -88,10 +82,15 @@ export type StudyConfig = {
   title: string;
   questionnaires: StudyQuestionnaire[];
   scenarios: StudyScenario[];
-  finalProfileFollowup: {
+  agent: {
+    id: string;
+    label: string;
+    description?: string;
+  };
+  finalProfileReflection: {
     enabled: boolean;
-    questions: FollowupQuestion[];
-    choices: StudyChoice[];
+    scorePrompt: string;
+    commentPrompt: string;
   };
 };
 
@@ -108,14 +107,17 @@ export type ScenarioState = {
   total: number;
 };
 
-export type FollowupState = {
-  questions: FollowupQuestion[];
-  choices: StudyChoice[];
-  sets: Array<{
-    label: "A" | "B";
-    initialProfile: string;
-    finalProfile: string;
-  }>;
+export type ReflectionState = {
+  scorePrompt: string;
+  commentPrompt: string;
+  initialProfile: string;
+  finalProfile: string;
+  reflection: {
+    accuracyScore: number;
+    comment: string;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
 };
 
 export type SurveyResponses = Record<string, string | number | string[]>;
@@ -137,9 +139,15 @@ export const getScenarioState = (sessionId: string) =>
 export const submitScenario = (
   sessionId: string,
   scenarioId: string,
-  input: { ranking: string[]; reasoning: string; otherText?: string },
+  input: {
+    ranking: string[];
+    reasoning: string;
+    informationNeeds: string;
+    conditionalChange: string;
+    otherText?: string;
+  },
 ) =>
-  api<{ ok: true; scenarioId: string; modelOutputs: ModelOutput[] }>(
+  api<{ ok: true; scenarioId: string; agentOutput: AgentOutput }>(
     `/api/scenarios/${scenarioId}/submit`,
     {
       method: "POST",
@@ -169,14 +177,14 @@ export const skipScenario = (sessionId: string, scenarioId: string) =>
     },
   );
 
-export const getFollowup = (sessionId: string) =>
-  api<FollowupState>(`/api/followup/${sessionId}`);
+export const getReflection = (sessionId: string) =>
+  api<ReflectionState>(`/api/reflection/${sessionId}`);
 
-export const submitFollowup = (
+export const submitReflection = (
   sessionId: string,
-  responses: Record<string, { choice: "A" | "B" | "both" | "neither"; reason: string }>,
+  input: { accuracyScore: number; comment: string },
 ) =>
-  api<{ ok: true }>(`/api/followup/${sessionId}`, {
+  api<{ ok: true }>(`/api/reflection/${sessionId}`, {
     method: "POST",
-    body: JSON.stringify({ responses }),
+    body: JSON.stringify(input),
   });

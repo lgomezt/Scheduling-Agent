@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc && npm run copy-assets",
-    "copy-assets": "mkdir -p dist/db dist/prompts dist/study/prompts && cp src/db/schema.sql dist/db/ && cp src/prompts/*.md dist/prompts/ && cp src/study/study-config.json dist/study/ && cp src/study/prompts/*.md dist/study/prompts/",
+    "copy-assets": "mkdir -p dist/db dist/study/prompts && cp src/db/schema.sql dist/db/ && cp src/study/study-config.json dist/study/ && cp src/study/prompts/*.md dist/study/prompts/",
     "start": "node dist/index.js"
   },
   "dependencies": {
@@ -16,14 +16,12 @@
     "dotenv": "^17.4.2",
     "express": "^4.21.2",
     "googleapis": "^172.0.0",
-    "multer": "^2.1.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/cookie-session": "^2.0.49",
     "@types/express": "^5.0.0",
-    "@types/multer": "^2.1.0",
     "@types/node": "^22.10.0",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3"

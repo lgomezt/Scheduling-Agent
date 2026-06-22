@@ -1,9 +1,7 @@
 import { db } from "../db/client.js";
 import {
   allStudyQuestions,
-  conditionQuestionIds,
   getStudyConfig,
-  type ModelCondition,
   type StudyQuestion,
   type StudyScenario,
 } from "./config.js";
@@ -126,18 +124,14 @@ const answerLabel = (question: StudyQuestion, answer: unknown) => {
   return answer;
 };
 
-export const surveyPayloadForCondition = (condition: ModelCondition, responses: SurveyAnswerMap) => {
-  const ids = new Set(conditionQuestionIds(condition));
-  return allStudyQuestions()
-    .filter((question) => ids.has(question.id))
-    .map((question) => ({
-      questionId: question.id,
-      type: question.type,
-      label: question.label,
-      answer: responses[question.id] ?? null,
-      answerLabel: answerLabel(question, responses[question.id]),
-    }));
-};
+export const surveyPayloadForAgent = (responses: SurveyAnswerMap) =>
+  allStudyQuestions().map((question) => ({
+    questionId: question.id,
+    type: question.type,
+    label: question.label,
+    answer: responses[question.id] ?? null,
+    answerLabel: answerLabel(question, responses[question.id]),
+  }));
 
 export const scenarioOptionMap = (scenario: StudyScenario): Record<string, string> =>
   Object.fromEntries(scenario.options.map((option) => [option.id, option.label]));

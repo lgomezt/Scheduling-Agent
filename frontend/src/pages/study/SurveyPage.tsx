@@ -12,8 +12,8 @@ import {
 } from "../../api/study";
 
 type Props = {
-  questionnaireId: "demographic" | "preferences_values";
-  stepNumber: 2 | 3;
+  questionnaireId: "preferences_values";
+  stepNumber: 2;
   stepTitle: string;
   nextPath: string;
 };

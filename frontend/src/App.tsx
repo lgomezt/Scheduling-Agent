@@ -5,6 +5,7 @@ import { Done } from "./pages/Done";
 import { SurveyPage } from "./pages/study/SurveyPage";
 import { ScenariosPage } from "./pages/study/ScenariosPage";
 import { OnboardingPage } from "./pages/study/OnboardingPage";
+import { ReflectionPage } from "./pages/study/ReflectionPage";
 
 export const App = () => {
   const { user, loading } = useAuth();
@@ -31,32 +32,16 @@ export const App = () => {
             path="/survey"
             element={
               <SurveyPage
-                questionnaireId="demographic"
-                stepNumber={2}
-                stepTitle="Demographic survey"
-                nextPath="/preferences"
-              />
-            }
-          />
-          <Route
-            path="/preferences"
-            element={
-              <SurveyPage
                 questionnaireId="preferences_values"
-                stepNumber={3}
+                stepNumber={2}
                 stepTitle="Preferences questionnaire"
                 nextPath="/scenarios"
               />
             }
           />
+          <Route path="/preferences" element={<Navigate to="/survey" replace />} />
           <Route path="/scenarios" element={<ScenariosPage />} />
-          <Route path="/followup" element={<Navigate to="/complete" replace />} />
-          <Route path="/onboarding/calendar" element={<Navigate to="/onboarding" replace />} />
-          <Route path="/onboarding/profile" element={<Navigate to="/survey" replace />} />
-          <Route path="/onboarding/scenarios" element={<Navigate to="/scenarios" replace />} />
-          <Route path="/upload" element={<Navigate to="/survey" replace />} />
-          <Route path="/workspace" element={<Navigate to="/scenarios" replace />} />
-          <Route path="/done" element={<Navigate to="/complete" replace />} />
+          <Route path="/reflection" element={<ReflectionPage />} />
           <Route path="/complete" element={<Done />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

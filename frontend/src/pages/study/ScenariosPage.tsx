@@ -1,14 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import { completeSession, getCurrentSession } from "../../api/sessions";
+import { getCurrentSession } from "../../api/sessions";
 import {
   getScenarioState,
   skipScenario as skipScenarioRequest,
   submitScenario,
   submitScenarioFeedback,
-  type ModelOutput,
+  type AgentOutput,
   type RankedOption,
   type ScenarioFeedback,
   type StudyScenario,
@@ -16,34 +16,22 @@ import {
 import { RankingList } from "../../components/study/RankingList";
 
 type FeedbackDraft = {
-  closerChoice: ScenarioFeedback["closerChoice"] | "";
-  scoreA: number | null;
-  scoreB: number | null;
-  commentA: string;
-  commentB: string;
-  comparisonComment: string;
+  reasoningAlignmentScore: number | null;
+  comment: string;
 };
 
 const emptyFeedbackDraft: FeedbackDraft = {
-  closerChoice: "",
-  scoreA: null,
-  scoreB: null,
-  commentA: "",
-  commentB: "",
-  comparisonComment: "",
+  reasoningAlignmentScore: null,
+  comment: "",
 };
 
 const toScenarioFeedback = (draft: FeedbackDraft): ScenarioFeedback => {
-  if (!draft.closerChoice || draft.scoreA == null || draft.scoreB == null) {
-    throw new Error("Complete the model evaluation before continuing");
+  if (draft.reasoningAlignmentScore == null || !draft.comment.trim()) {
+    throw new Error("Complete the agent feedback before continuing");
   }
   return {
-    closerChoice: draft.closerChoice,
-    scoreA: draft.scoreA,
-    scoreB: draft.scoreB,
-    commentA: draft.commentA,
-    commentB: draft.commentB,
-    comparisonComment: draft.comparisonComment,
+    reasoningAlignmentScore: draft.reasoningAlignmentScore,
+    comment: draft.comment.trim(),
   };
 };
 
@@ -66,8 +54,10 @@ export const ScenariosPage = () => {
   const scenario = scenarios[activeIndex];
   const [ranking, setRanking] = useState<string[]>([]);
   const [reasoning, setReasoning] = useState("");
+  const [informationNeeds, setInformationNeeds] = useState("");
+  const [conditionalChange, setConditionalChange] = useState("");
   const [otherText, setOtherText] = useState("");
-  const [localOutputs, setLocalOutputs] = useState<ModelOutput[] | null>(null);
+  const [localOutput, setLocalOutput] = useState<AgentOutput | null>(null);
   const [editingAnswer, setEditingAnswer] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackDraft>(emptyFeedbackDraft);
 
@@ -75,36 +65,42 @@ export const ScenariosPage = () => {
     if (!scenario) return;
     setRanking(scenario.userResponse?.ranking.map((item) => item.optionId) ?? scenario.options.map((option) => option.id));
     setReasoning(scenario.userResponse?.reasoning ?? "");
+    setInformationNeeds(scenario.userResponse?.informationNeeds ?? "");
+    setConditionalChange(scenario.userResponse?.conditionalChange ?? "");
     setOtherText(scenario.userResponse?.otherText ?? "");
-    setLocalOutputs(null);
+    setLocalOutput(null);
     setEditingAnswer(false);
     setFeedback(
       scenario.feedback
         ? {
-            closerChoice: scenario.feedback.closerChoice,
-            scoreA: scenario.feedback.scoreA,
-            scoreB: scenario.feedback.scoreB,
-            commentA: scenario.feedback.commentA,
-            commentB: scenario.feedback.commentB,
-            comparisonComment: scenario.feedback.comparisonComment,
+            reasoningAlignmentScore: scenario.feedback.reasoningAlignmentScore,
+            comment: scenario.feedback.comment,
           }
         : emptyFeedbackDraft,
     );
   }, [scenario?.id]);
 
   useEffect(() => {
-    if (state && state.currentScenarioIndex >= state.total) navigate("/complete");
+    if (state && state.currentScenarioIndex >= state.total) navigate("/reflection");
   }, [state, navigate]);
 
   const submit = useMutation({
-    mutationFn: (override?: { ranking: string[]; reasoning: string; otherText?: string }) =>
+    mutationFn: (override?: {
+      ranking: string[];
+      reasoning: string;
+      informationNeeds: string;
+      conditionalChange: string;
+      otherText?: string;
+    }) =>
       submitScenario(sessionId, scenario.id, {
         ranking: override?.ranking ?? ranking,
         reasoning: override?.reasoning ?? reasoning.trim(),
+        informationNeeds: override?.informationNeeds ?? informationNeeds.trim(),
+        conditionalChange: override?.conditionalChange ?? conditionalChange.trim(),
         otherText: override?.otherText ?? (otherText.trim() || undefined),
       }),
     onSuccess: (result) => {
-      setLocalOutputs(result.modelOutputs);
+      setLocalOutput(result.agentOutput);
       setEditingAnswer(false);
       qc.invalidateQueries({ queryKey: ["scenarios", sessionId] });
     },
@@ -113,26 +109,22 @@ export const ScenariosPage = () => {
   const saveFeedback = useMutation({
     mutationFn: (override?: ScenarioFeedback) =>
       submitScenarioFeedback(sessionId, scenario.id, override ?? toScenarioFeedback(feedback)),
-    onSuccess: async (result) => {
+    onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ["scenarios", sessionId] });
       qc.invalidateQueries({ queryKey: ["session", "current"] });
       if (result.scenariosComplete) {
-        await completeSession(sessionId);
-        qc.invalidateQueries({ queryKey: ["session", "latest"] });
-        navigate("/complete");
+        navigate("/reflection");
       }
     },
   });
 
   const skipCurrentScenario = useMutation({
     mutationFn: () => skipScenarioRequest(sessionId, scenario.id),
-    onSuccess: async (updated) => {
+    onSuccess: (updated) => {
       qc.invalidateQueries({ queryKey: ["scenarios", sessionId] });
       qc.invalidateQueries({ queryKey: ["session", "current"] });
       if (updated.scenariosComplete || updated.nextScenarioIndex >= scenarios.length) {
-        await completeSession(sessionId);
-        qc.invalidateQueries({ queryKey: ["session", "latest"] });
-        navigate("/complete");
+        navigate("/reflection");
       }
     },
   });
@@ -145,10 +137,10 @@ export const ScenariosPage = () => {
     );
   }
   if (!session) return <Navigate to="/survey" replace />;
-  if (!scenario) return <Navigate to="/complete" replace />;
+  if (!scenario) return <Navigate to="/reflection" replace />;
 
-  const modelOutputs = localOutputs ?? scenario.modelOutputs ?? [];
-  const inComparison = modelOutputs.length === 2 && !editingAnswer;
+  const agentOutput = localOutput ?? scenario.agentOutput ?? null;
+  const inReview = Boolean(agentOutput && !editingAnswer);
   const otherOption = scenario.options.find((option) => option.isOther);
   const otherIndex = otherOption ? ranking.indexOf(otherOption.id) : -1;
   const otherNeedsDetail = Boolean(otherOption && otherIndex >= 0 && otherIndex !== ranking.length - 1);
@@ -159,18 +151,16 @@ export const ScenariosPage = () => {
   const canSubmitRanking =
     rankingIsComplete &&
     reasoning.trim().length > 0 &&
+    informationNeeds.trim().length > 0 &&
+    conditionalChange.trim().length > 0 &&
     (!otherNeedsDetail || otherText.trim().length > 0);
   const canSubmitFeedback =
-    feedback.closerChoice !== "" &&
-    feedback.scoreA != null &&
-    feedback.scoreB != null &&
-    feedback.commentA.trim().length > 0 &&
-    feedback.commentB.trim().length > 0 &&
-    feedback.comparisonComment.trim().length > 0;
+    feedback.reasoningAlignmentScore != null && feedback.comment.trim().length > 0;
+
   return (
     <div className="study-screen">
       <div className="study-card scenario-card">
-        <div className="step-label">STEP 4 OF 5 · SCENARIOS</div>
+        <div className="step-label">STEP 3 OF 5 - SCENARIOS</div>
         <div className="quiet-progress" aria-hidden="true">
           <span style={{ width: `${scenarios.length ? ((activeIndex + 1) / scenarios.length) * 100 : 0}%` }} />
         </div>
@@ -178,10 +168,10 @@ export const ScenariosPage = () => {
         <h1>{scenario.title}</h1>
         <p className="scenario-prompt">{scenario.prompt}</p>
 
-        {!inComparison ? (
+        {!inReview ? (
           <section className="study-section">
             <h2>Your ranking</h2>
-            <p className="study-subtitle">Order every option from most representative to least representative.</p>
+            <p className="study-subtitle">Order every option from most acceptable to least acceptable.</p>
             <RankingList
               options={scenario.options}
               ranking={ranking}
@@ -211,11 +201,39 @@ export const ScenariosPage = () => {
               </span>
               <textarea
                 className="text-input textarea-input"
-                rows={7}
+                rows={6}
                 value={reasoning}
                 onChange={(event) => setReasoning(event.target.value)}
                 disabled={submit.isPending || !!scenario.feedback}
                 placeholder={scenario.reasoningPrompt}
+              />
+            </label>
+
+            <label className="study-field flat-field transparent-field">
+              <span>
+                Information you would want to clarify <span className="required-mark">*</span>
+              </span>
+              <textarea
+                className="text-input textarea-input"
+                rows={5}
+                value={informationNeeds}
+                onChange={(event) => setInformationNeeds(event.target.value)}
+                disabled={submit.isPending || !!scenario.feedback}
+                placeholder={scenario.informationNeedsPrompt}
+              />
+            </label>
+
+            <label className="study-field flat-field transparent-field">
+              <span>
+                Changes that would affect your ranking <span className="required-mark">*</span>
+              </span>
+              <textarea
+                className="text-input textarea-input"
+                rows={5}
+                value={conditionalChange}
+                onChange={(event) => setConditionalChange(event.target.value)}
+                disabled={submit.isPending || !!scenario.feedback}
+                placeholder={scenario.conditionalChangePrompt}
               />
             </label>
 
@@ -238,7 +256,7 @@ export const ScenariosPage = () => {
                 <button type="button" onClick={() => submit.mutate(undefined)} disabled={!canSubmitRanking || submit.isPending}>
                   {submit.isPending ? (
                     <>
-                      <Loader2 className="spin-icon" size={16} /> Generating responses...
+                      <Loader2 className="spin-icon" size={16} /> Generating response...
                     </>
                   ) : (
                     "Submit ranking"
@@ -248,11 +266,13 @@ export const ScenariosPage = () => {
             ) : null}
           </section>
         ) : (
-          <ComparisonPanel
+          <AgentReviewPanel
             scenario={scenario}
-            outputs={modelOutputs}
+            output={agentOutput!}
             userRanking={scenario.userResponse?.ranking ?? rankingToRankedOptions(scenario, ranking)}
             userReasoning={scenario.userResponse?.reasoning ?? reasoning}
+            userInformationNeeds={scenario.userResponse?.informationNeeds ?? informationNeeds}
+            userConditionalChange={scenario.userResponse?.conditionalChange ?? conditionalChange}
             userOtherText={scenario.userResponse?.otherText ?? otherText}
             feedback={feedback}
             setFeedback={setFeedback}
@@ -266,7 +286,7 @@ export const ScenariosPage = () => {
           </div>
         ) : null}
 
-        {inComparison && !scenario.feedback ? (
+        {inReview && !scenario.feedback ? (
           <div className="study-actions">
             <button
               type="button"
@@ -315,107 +335,68 @@ const rankingToRankedOptions = (scenario: StudyScenario, ranking: string[]): Ran
   }));
 };
 
-const ComparisonPanel = ({
-  scenario,
-  outputs,
+const AgentReviewPanel = ({
+  output,
   userRanking,
   userReasoning,
+  userInformationNeeds,
+  userConditionalChange,
   userOtherText,
   feedback,
   setFeedback,
   disabled,
 }: {
   scenario: StudyScenario;
-  outputs: ModelOutput[];
+  output: AgentOutput;
   userRanking: RankedOption[];
   userReasoning: string;
+  userInformationNeeds: string;
+  userConditionalChange: string;
   userOtherText?: string | null;
   feedback: FeedbackDraft;
   setFeedback: (feedback: FeedbackDraft) => void;
   disabled?: boolean;
 }) => {
-  const sorted = useMemo(() => [...outputs].sort((a, b) => a.displayLabel.localeCompare(b.displayLabel)), [outputs]);
   const update = <K extends keyof FeedbackDraft>(key: K, value: FeedbackDraft[K]) =>
     setFeedback({ ...feedback, [key]: value });
 
   return (
     <section className="study-section comparison-section">
-      <div className="comparison-grid">
+      <div className="single-agent-grid">
         <AnswerCard
           title="Your answer"
           ranking={userRanking}
           reasoning={userReasoning}
+          informationNeeds={userInformationNeeds}
+          conditionalChange={userConditionalChange}
           otherText={userOtherText}
           tone="user"
         />
-        {sorted.map((output) => (
-          <AnswerCard
-            key={output.displayLabel}
-            title={`Response ${output.displayLabel}`}
-            ranking={output.ranking}
-            reasoning={output.reasoning}
-          />
-        ))}
+        <AnswerCard
+          title="Agent response"
+          ranking={output.ranking}
+          reasoning={output.reasoning}
+        />
       </div>
 
-      <fieldset className="study-field comparison-question">
-        <legend>Which proposed action is closer to what you would do?</legend>
-        <div className="segmented-options">
-          {[
-            ["A", "Response A"],
-            ["B", "Response B"],
-            ["both", "Both equally"],
-            ["neither", "Neither"],
-          ].map(([value, label]) => (
-            <label key={value} className="segment-choice">
-              <input
-                type="radio"
-                name={`${scenario.id}_closer`}
-                checked={feedback.closerChoice === value}
-                onChange={() => update("closerChoice", value as FeedbackDraft["closerChoice"])}
-                disabled={disabled}
-              />
-              <span>{label}</span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      <ScoreField
+        label="How well does the agent's reasoning reflect your values?"
+        value={feedback.reasoningAlignmentScore}
+        onChange={(value) => update("reasoningAlignmentScore", value)}
+        disabled={disabled}
+      />
 
-      <div className="score-grid">
-        <ScoreField label="How well does Response A reasoning reflect your values?" value={feedback.scoreA} onChange={(value) => update("scoreA", value)} disabled={disabled} />
-        <ScoreField label="How well does Response B reasoning reflect your values?" value={feedback.scoreB} onChange={(value) => update("scoreB", value)} disabled={disabled} />
-      </div>
-
-      <label className="study-field flat-field">
-        <span>Why did you score Response A this way? <span className="required-mark">*</span></span>
+      <label className="study-field flat-field agent-feedback-field">
+        <span>
+          What do you think about the agent's reasoning? <span className="required-mark">*</span>
+        </span>
         <textarea
-          className="text-input textarea-input"
-          rows={4}
-          value={feedback.commentA}
-          onChange={(event) => update("commentA", event.target.value)}
+          className="text-input textarea-input feedback-textarea"
+          rows={3}
+          value={feedback.comment}
+          onChange={(event) => update("comment", event.target.value)}
           disabled={disabled}
-        />
-      </label>
-
-      <label className="study-field flat-field">
-        <span>Why did you score Response B this way? <span className="required-mark">*</span></span>
-        <textarea
-          className="text-input textarea-input"
-          rows={4}
-          value={feedback.commentB}
-          onChange={(event) => update("commentB", event.target.value)}
-          disabled={disabled}
-        />
-      </label>
-
-      <label className="study-field flat-field">
-        <span>What do you think about the two LLM answers overall? <span className="required-mark">*</span></span>
-        <textarea
-          className="text-input textarea-input"
-          rows={5}
-          value={feedback.comparisonComment}
-          onChange={(event) => update("comparisonComment", event.target.value)}
-          disabled={disabled}
+          placeholder="Mention what felt aligned, misaligned, missing, or uncertain."
         />
       </label>
     </section>
@@ -426,12 +407,16 @@ const AnswerCard = ({
   title,
   ranking,
   reasoning,
+  informationNeeds,
+  conditionalChange,
   otherText,
   tone,
 }: {
   title: string;
   ranking: RankedOption[];
   reasoning: string;
+  informationNeeds?: string;
+  conditionalChange?: string;
   otherText?: string | null;
   tone?: "user";
 }) => (
@@ -449,6 +434,18 @@ const AnswerCard = ({
       <span>Reasoning</span>
       <p>{reasoning}</p>
     </div>
+    {informationNeeds ? (
+      <div className="answer-reasoning compact">
+        <span>Information needs</span>
+        <p>{informationNeeds}</p>
+      </div>
+    ) : null}
+    {conditionalChange ? (
+      <div className="answer-reasoning compact">
+        <span>Conditional changes</span>
+        <p>{conditionalChange}</p>
+      </div>
+    ) : null}
   </article>
 );
 

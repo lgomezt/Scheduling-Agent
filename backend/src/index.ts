@@ -8,13 +8,9 @@ import { authRouter } from "./routes/auth.js";
 import { sessionsRouter } from "./routes/sessions.js";
 import { studyRouter } from "./routes/study.js";
 import { surveyRouter } from "./routes/survey.js";
-import { uploadsRouter } from "./routes/uploads.js";
-import { profileRouter } from "./routes/profile.js";
 import { scenariosRouter } from "./routes/scenarios.js";
-import { calendarRouter } from "./routes/calendar.js";
-import { agentRouter } from "./routes/agent.js";
 import { exportRouter } from "./routes/export.js";
-import { followupRouter } from "./routes/followup.js";
+import { reflectionRouter } from "./routes/reflection.js";
 
 const app = express();
 
@@ -31,12 +27,8 @@ app.use("/api/auth", authRouter);
 app.use("/api/sessions", sessionsRouter);
 app.use("/api/study", studyRouter);
 app.use("/api/survey", surveyRouter);
-app.use("/api/uploads", uploadsRouter);
-app.use("/api/profile", profileRouter);
 app.use("/api/scenarios", scenariosRouter);
-app.use("/api/events", calendarRouter);
-app.use("/api/agent", agentRouter);
-app.use("/api/followup", followupRouter);
+app.use("/api/reflection", reflectionRouter);
 app.use("/api/export", exportRouter);
 
 const publicDir = path.resolve(process.env.PUBLIC_DIR ?? "public");

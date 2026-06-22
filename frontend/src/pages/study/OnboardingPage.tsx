@@ -13,7 +13,7 @@ export const OnboardingPage = () => {
         <h1>Hello {firstName},</h1>
         <p className="intro-copy">
           This study has four short parts: answer questions about your context and preferences,
-          rank scheduling scenarios, then evaluate how close two agents are to representing you.
+          rank scheduling scenarios, review one agent response per scenario, then reflect on the final reconstructed profile.
         </p>
         <div className="study-actions onboarding-actions">
           <button type="button" className="btn-secondary" onClick={() => void logout()}>
