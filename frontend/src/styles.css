@@ -539,6 +539,25 @@ a.btn-primary { display: inline-block; text-decoration: none; background: var(--
   cursor: pointer;
 }
 
+.choice-control {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.other-choice-row {
+  align-items: center;
+  cursor: default;
+}
+
+.other-choice-input {
+  flex: 1 1 260px;
+  min-width: min(100%, 220px);
+  padding-block: 0.5rem;
+}
+
 .choice-row span,
 .segment-choice span {
   line-height: 1.35;
@@ -1010,8 +1029,6 @@ a.btn-primary { display: inline-block; text-decoration: none; background: var(--
 
 .diff-deleted {
   background: rgba(179, 38, 30, 0.14);
-  text-decoration: line-through;
-  text-decoration-thickness: 1px;
 }
 
 .done-screen {

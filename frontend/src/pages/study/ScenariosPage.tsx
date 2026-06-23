@@ -179,10 +179,10 @@ export const ScenariosPage = () => {
               disabled={submit.isPending || !!scenario.feedback}
             />
 
-            {otherOption && (otherNeedsDetail || otherText.trim().length > 0) ? (
+            {otherOption ? (
               <label className="study-field flat-field transparent-field">
                 <span>
-                  Other details {otherNeedsDetail ? <span className="required-mark">*</span> : null}
+                  Other: {otherNeedsDetail ? <span className="required-mark">*</span> : null}
                 </span>
                 <p className="inline-field-note">Only required when Other is not ranked last.</p>
                 <input
@@ -426,7 +426,7 @@ const AnswerCard = ({
       {ranking.map((item) => (
         <li key={item.optionId}>
           <strong>Option {item.optionId}</strong>
-          <span>{item.optionId === "E" && otherText ? otherText : item.label}</span>
+          <span>{item.optionId === "E" && otherText ? `Other: ${otherText}` : item.label}</span>
         </li>
       ))}
     </ol>

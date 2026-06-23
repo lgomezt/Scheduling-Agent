@@ -120,7 +120,24 @@ export type ReflectionState = {
   } | null;
 };
 
-export type SurveyResponses = Record<string, string | number | string[]>;
+export type SingleChoiceOtherResponse = {
+  choiceId: string;
+  otherText: string;
+};
+
+export type MultiChoiceOtherResponse = {
+  choices: string[];
+  otherText: string;
+};
+
+export type SurveyResponseValue =
+  | string
+  | number
+  | string[]
+  | SingleChoiceOtherResponse
+  | MultiChoiceOtherResponse;
+
+export type SurveyResponses = Record<string, SurveyResponseValue>;
 
 export const getStudyConfig = () => api<StudyConfig>("/api/study/config");
 

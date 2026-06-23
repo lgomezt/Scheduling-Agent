@@ -8,6 +8,7 @@ import {
   getSurveyState,
   submitSurvey,
   type StudyQuestion,
+  type SurveyResponseValue,
   type SurveyResponses,
 } from "../../api/study";
 
@@ -18,15 +19,62 @@ type Props = {
   nextPath: string;
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const selectedSingleChoiceId = (value: unknown) => {
+  if (typeof value === "string") return value;
+  if (isRecord(value) && typeof value.choiceId === "string") return value.choiceId;
+  return "";
+};
+
+const selectedMultiChoiceIds = (value: unknown) => {
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string");
+  if (isRecord(value) && Array.isArray(value.choices)) {
+    return value.choices.filter((item): item is string => typeof item === "string");
+  }
+  return [];
+};
+
+const responseOtherText = (value: unknown) =>
+  isRecord(value) && typeof value.otherText === "string" ? value.otherText : "";
+
+const otherChoiceFor = (question: StudyQuestion) => question.choices?.find((choice) => choice.isOther);
+
+const isOtherChoice = (question: StudyQuestion, choiceId: string) =>
+  Boolean(question.choices?.some((choice) => choice.id === choiceId && choice.isOther));
+
+const singleChoiceResponse = (
+  question: StudyQuestion,
+  choiceId: string,
+  otherText: string,
+): SurveyResponseValue =>
+  isOtherChoice(question, choiceId) ? { choiceId, otherText } : choiceId;
+
+const multiChoiceResponse = (
+  question: StudyQuestion,
+  choices: string[],
+  otherText: string,
+): SurveyResponseValue => {
+  const otherChoice = otherChoiceFor(question);
+  return otherChoice && choices.includes(otherChoice.id) ? { choices, otherText } : choices;
+};
+
 const hasQuestionAnswer = (question: StudyQuestion, value: unknown) => {
   if (question.type === "text" || question.type === "textarea") {
     return typeof value === "string" && value.trim().length > 0;
   }
   if (question.type === "single_choice") {
-    return typeof value === "string" && value.trim().length > 0;
+    const choiceId = selectedSingleChoiceId(value);
+    return Boolean(choiceId && (!isOtherChoice(question, choiceId) || responseOtherText(value).trim().length > 0));
   }
   if (question.type === "multi_choice") {
-    return Array.isArray(value) && value.length > 0;
+    const choices = selectedMultiChoiceIds(value);
+    const otherChoice = otherChoiceFor(question);
+    return Boolean(
+      choices.length > 0 &&
+        (!otherChoice || !choices.includes(otherChoice.id) || responseOtherText(value).trim().length > 0),
+    );
   }
   if (question.type === "scale") {
     return typeof value === "number";
@@ -98,16 +146,17 @@ export const SurveyPage = ({ questionnaireId, stepNumber, stepTitle, nextPath }:
     );
   }
 
-  const updateResponse = (questionId: string, value: string | number | string[]) => {
+  const updateResponse = (questionId: string, value: SurveyResponseValue) => {
     setResponses((state) => ({ ...state, [questionId]: value }));
   };
 
   const toggleMulti = (question: StudyQuestion, choiceId: string) => {
-    const selected = Array.isArray(responses[question.id]) ? (responses[question.id] as string[]) : [];
+    const existing = responses[question.id];
+    const selected = selectedMultiChoiceIds(existing);
     const exists = selected.includes(choiceId);
     const next = exists ? selected.filter((id) => id !== choiceId) : [...selected, choiceId];
     if (!exists && question.maxSelections && next.length > question.maxSelections) return;
-    updateResponse(question.id, next);
+    updateResponse(question.id, multiChoiceResponse(question, next, responseOtherText(existing)));
   };
 
   const goNext = () => {
@@ -186,9 +235,26 @@ const SurveyField = ({
 }: {
   question: StudyQuestion;
   value: unknown;
-  onChange: (value: string | number | string[]) => void;
+  onChange: (value: SurveyResponseValue) => void;
   onToggleMulti: (choiceId: string) => void;
 }) => {
+  const otherChoice = otherChoiceFor(question);
+  const selectedSingle = selectedSingleChoiceId(value);
+  const selectedMulti = selectedMultiChoiceIds(value);
+  const otherText = responseOtherText(value);
+
+  const updateSingleOtherText = (text: string) => {
+    if (!otherChoice) return;
+    onChange({ choiceId: otherChoice.id, otherText: text });
+  };
+
+  const updateMultiOtherText = (text: string) => {
+    if (!otherChoice) return;
+    const nextChoices = selectedMulti.includes(otherChoice.id) ? selectedMulti : [...selectedMulti, otherChoice.id];
+    if (question.maxSelections && nextChoices.length > question.maxSelections) return;
+    onChange({ choices: nextChoices, otherText: text });
+  };
+
   return (
     <fieldset className="study-field question-field transparent-field">
       <legend>{question.label}</legend>
@@ -213,17 +279,38 @@ const SurveyField = ({
 
       {question.type === "single_choice" ? (
         <div className="choice-list">
-          {(question.choices ?? []).map((choice) => (
-            <label key={choice.id} className="choice-row">
-              <input
-                type="radio"
-                name={question.id}
-                checked={value === choice.id}
-                onChange={() => onChange(choice.id)}
-              />
-              <span>{choice.label}</span>
-            </label>
-          ))}
+          {(question.choices ?? []).map((choice) =>
+            choice.isOther ? (
+              <div key={choice.id} className="choice-row other-choice-row">
+                <label className="choice-control">
+                  <input
+                    type="radio"
+                    name={question.id}
+                    checked={selectedSingle === choice.id}
+                    onChange={() => onChange(singleChoiceResponse(question, choice.id, otherText))}
+                  />
+                  <span>Other:</span>
+                </label>
+                <input
+                  className="text-input other-choice-input"
+                  value={selectedSingle === choice.id ? otherText : ""}
+                  onFocus={() => onChange(singleChoiceResponse(question, choice.id, otherText))}
+                  onChange={(event) => updateSingleOtherText(event.target.value)}
+                  placeholder="Please specify"
+                />
+              </div>
+            ) : (
+              <label key={choice.id} className="choice-row">
+                <input
+                  type="radio"
+                  name={question.id}
+                  checked={selectedSingle === choice.id}
+                  onChange={() => onChange(choice.id)}
+                />
+                <span>{choice.label}</span>
+              </label>
+            ),
+          )}
         </div>
       ) : null}
 
@@ -234,16 +321,42 @@ const SurveyField = ({
               Select up to {question.maxSelections}.
             </div>
           ) : null}
-          {(question.choices ?? []).map((choice) => (
-            <label key={choice.id} className="choice-row">
-              <input
-                type="checkbox"
-                checked={Array.isArray(value) && value.includes(choice.id)}
-                onChange={() => onToggleMulti(choice.id)}
-              />
-              <span>{choice.label}</span>
-            </label>
-          ))}
+          {(question.choices ?? []).map((choice) =>
+            choice.isOther ? (
+              <div key={choice.id} className="choice-row other-choice-row">
+                <label className="choice-control">
+                  <input
+                    type="checkbox"
+                    checked={selectedMulti.includes(choice.id)}
+                    onChange={() => onToggleMulti(choice.id)}
+                  />
+                  <span>Other:</span>
+                </label>
+                <input
+                  className="text-input other-choice-input"
+                  value={selectedMulti.includes(choice.id) ? otherText : ""}
+                  onFocus={() => {
+                    if (!selectedMulti.includes(choice.id)) onToggleMulti(choice.id);
+                  }}
+                  onChange={(event) => updateMultiOtherText(event.target.value)}
+                  placeholder="Please specify"
+                  disabled={
+                    Boolean(question.maxSelections && selectedMulti.length >= question.maxSelections) &&
+                    !selectedMulti.includes(choice.id)
+                  }
+                />
+              </div>
+            ) : (
+              <label key={choice.id} className="choice-row">
+                <input
+                  type="checkbox"
+                  checked={selectedMulti.includes(choice.id)}
+                  onChange={() => onToggleMulti(choice.id)}
+                />
+                <span>{choice.label}</span>
+              </label>
+            ),
+          )}
         </div>
       ) : null}
 

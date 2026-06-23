@@ -72,7 +72,7 @@
             { "id": "career_goals", "label": "Advancing long-term work or career goals" },
             { "id": "fairness", "label": "Maintaining fairness among people" },
             { "id": "relationships", "label": "Preserving good relationships" },
-            { "id": "other", "label": "Other" }
+            { "id": "other", "label": "Other", "isOther": true }
           ]
         },
         {
@@ -115,7 +115,7 @@
         { "id": "B", "label": "Reschedule the meeting with Maya and meet your supervisor at 3:00." },
         { "id": "C", "label": "Ask your supervisor whether the update is time-sensitive before deciding." },
         { "id": "D", "label": "Ask whether you could split the time between Maya and your supervisor." },
-        { "id": "E", "label": "Other: ________", "isOther": true }
+        { "id": "E", "label": "Other", "isOther": true }
       ],
       "reasoningPrompt": "Please explain your ranking. What mattered most to you in this situation?",
       "informationNeedsPrompt": "Is there any information you would want to ask for or clarify before making your final decision? If yes, please explain what you would ask and why it would matter.",
@@ -130,7 +130,7 @@
         { "id": "B", "label": "Decline the call and suggest discussing it tomorrow during regular working or studying hours." },
         { "id": "C", "label": "Decline the call but offer to send brief written comments tonight." },
         { "id": "D", "label": "Offer to speak briefly before 6:00 p.m." },
-        { "id": "E", "label": "Other: ________", "isOther": true }
+        { "id": "E", "label": "Other", "isOther": true }
       ],
       "reasoningPrompt": "Please explain your ranking. What mattered most to you in this situation?",
       "informationNeedsPrompt": "Is there any information you would want to ask for or clarify before making your final decision? If yes, please explain what you would ask and why it would matter.",
@@ -145,7 +145,7 @@
         { "id": "B", "label": "Wait until next week so that everyone can attend." },
         { "id": "C", "label": "Schedule the meeting tomorrow and ask Alex to send input in advance." },
         { "id": "D", "label": "Schedule the meeting tomorrow but limit it to topics that do not require Alex's participation." },
-        { "id": "E", "label": "Other: ________", "isOther": true }
+        { "id": "E", "label": "Other", "isOther": true }
       ],
       "reasoningPrompt": "Please explain your ranking. What mattered most to you in this situation?",
       "informationNeedsPrompt": "Is there any information you would want to ask for or clarify before making your final decision? If yes, please explain what you would ask and why it would matter.",
@@ -160,7 +160,7 @@
         { "id": "B", "label": "Suggest scheduling the meeting next week instead." },
         { "id": "C", "label": "Suggest a shorter meeting on Thursday so that you can still protect part of your planned work time." },
         { "id": "D", "label": "Suggest handling the coordination asynchronously first." },
-        { "id": "E", "label": "Other: ________", "isOther": true }
+        { "id": "E", "label": "Other", "isOther": true }
       ],
       "reasoningPrompt": "Please explain your ranking. What mattered most to you in this situation?",
       "informationNeedsPrompt": "Is there any information you would want to ask for or clarify before making your final decision? If yes, please explain what you would ask and why it would matter.",
@@ -175,7 +175,7 @@
         { "id": "B", "label": "Use the meeting with Sofia mainly to divide next steps, rather than make substantial progress together." },
         { "id": "C", "label": "Propose shortening or moving the meeting with Sofia." },
         { "id": "D", "label": "Prepare fully for Dr. Patel's meeting and attend the meeting with Sofia with less time to contribute than planned." },
-        { "id": "E", "label": "Other: ________", "isOther": true }
+        { "id": "E", "label": "Other", "isOther": true }
       ],
       "reasoningPrompt": "Please explain your ranking. What mattered most to you in this situation?",
       "informationNeedsPrompt": "Is there any information you would want to ask for or clarify before making your final decision? If yes, please explain what you would ask and why it would matter.",

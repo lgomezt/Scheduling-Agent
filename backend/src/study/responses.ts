@@ -16,8 +16,33 @@ export const parseJson = <T>(value: string | null): T | null => {
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.trim().length > 0;
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 const choiceIds = (question: StudyQuestion): Set<string> =>
   new Set((question.choices ?? []).map((choice) => choice.id));
+
+const otherChoiceFor = (question: StudyQuestion) => question.choices?.find((choice) => choice.isOther);
+
+const isOtherChoice = (question: StudyQuestion, choiceId: string) =>
+  Boolean(question.choices?.some((choice) => choice.id === choiceId && choice.isOther));
+
+const otherTextFor = (value: unknown) =>
+  isRecord(value) && isNonEmptyString(value.otherText) ? value.otherText.trim() : null;
+
+const singleChoiceIdFor = (value: unknown) => {
+  if (isNonEmptyString(value)) return value;
+  if (isRecord(value) && isNonEmptyString(value.choiceId)) return value.choiceId;
+  return null;
+};
+
+const multiChoiceIdsFor = (value: unknown) => {
+  if (Array.isArray(value) && value.every(isNonEmptyString)) return value;
+  if (isRecord(value) && Array.isArray(value.choices) && value.choices.every(isNonEmptyString)) {
+    return value.choices;
+  }
+  return null;
+};
 
 export const validateSurveyResponses = (responses: SurveyAnswerMap): SurveyAnswerMap => {
   const normalized: SurveyAnswerMap = {};
@@ -35,24 +60,40 @@ export const validateSurveyResponses = (responses: SurveyAnswerMap): SurveyAnswe
     }
 
     if (question.type === "single_choice") {
-      if (!isNonEmptyString(value)) throw new Error(`Response for ${question.id} must be a choice id`);
-      if (!choiceIds(question).has(value)) throw new Error(`Invalid choice "${value}" for ${question.id}`);
-      normalized[question.id] = value;
+      const choiceId = singleChoiceIdFor(value);
+      if (!choiceId) throw new Error(`Response for ${question.id} must be a choice id`);
+      if (!choiceIds(question).has(choiceId)) throw new Error(`Invalid choice "${choiceId}" for ${question.id}`);
+      if (isOtherChoice(question, choiceId)) {
+        const otherText = otherTextFor(value);
+        if (!otherText) throw new Error(`Other details are required for ${question.id}`);
+        normalized[question.id] = { choiceId, otherText };
+      } else {
+        normalized[question.id] = choiceId;
+      }
       continue;
     }
 
     if (question.type === "multi_choice") {
-      if (!Array.isArray(value) || !value.every(isNonEmptyString)) {
+      const choices = multiChoiceIdsFor(value);
+      if (!choices) {
         throw new Error(`Response for ${question.id} must be a choice id array`);
       }
-      if (question.maxSelections && value.length > question.maxSelections) {
+      if (question.maxSelections && choices.length > question.maxSelections) {
         throw new Error(`Response for ${question.id} allows at most ${question.maxSelections} selections`);
       }
       const valid = choiceIds(question);
-      for (const choiceId of value) {
+      for (const choiceId of choices) {
         if (!valid.has(choiceId)) throw new Error(`Invalid choice "${choiceId}" for ${question.id}`);
       }
-      normalized[question.id] = [...new Set(value)];
+      const deduped = [...new Set(choices)];
+      const otherChoice = otherChoiceFor(question);
+      if (otherChoice && deduped.includes(otherChoice.id)) {
+        const otherText = otherTextFor(value);
+        if (!otherText) throw new Error(`Other details are required for ${question.id}`);
+        normalized[question.id] = { choices: deduped, otherText };
+      } else {
+        normalized[question.id] = deduped;
+      }
       continue;
     }
 
@@ -109,8 +150,23 @@ const answerLabel = (question: StudyQuestion, answer: unknown) => {
   if (question.type === "single_choice" && typeof answer === "string") {
     return choices.get(answer) ?? answer;
   }
+  if (question.type === "single_choice" && isRecord(answer) && isNonEmptyString(answer.choiceId)) {
+    const label = choices.get(answer.choiceId) ?? answer.choiceId;
+    return isOtherChoice(question, answer.choiceId) && isNonEmptyString(answer.otherText)
+      ? `${label}: ${answer.otherText.trim()}`
+      : label;
+  }
   if (question.type === "multi_choice" && Array.isArray(answer)) {
     return answer.map((choiceId) => choices.get(String(choiceId)) ?? String(choiceId));
+  }
+  if (question.type === "multi_choice" && isRecord(answer) && Array.isArray(answer.choices)) {
+    return answer.choices.map((choiceId) => {
+      const id = String(choiceId);
+      const label = choices.get(id) ?? id;
+      return isOtherChoice(question, id) && isNonEmptyString(answer.otherText)
+        ? `${label}: ${answer.otherText.trim()}`
+        : label;
+    });
   }
   if (question.type === "scale" && typeof answer === "number") {
     return {
